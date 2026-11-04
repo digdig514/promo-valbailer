@@ -1,44 +1,40 @@
 # ============================================================
-#  LISTA DE COMPRAS — edite à vontade
+#  PANIER DE BASE / CESTA BÁSICA — usada na aba "Où magasiner"
 # ============================================================
-#  Formato de cada linha:
-#     Nome em português = termo em francês
+#  Formato:   Nome PT | Nom FR = termos de busca em francês
 #
-#  - Use os termos em FRANCÊS (é a língua dos folhetos no Québec).
-#  - Vários termos alternativos: separe com  |
-#       Ovos = oeufs | douzaine d'oeufs
-#  - Para EXCLUIR produtos que não interessam, use -palavra
-#       Morango = fraises -yogourt -confiture
-#    (assim "yogourt aux fraises" não entra na comparação)
-#  - Linhas entre colchetes viram seções no relatório: [Frutas]
-#  - Linhas começando com # são ignoradas.
+#  - Termos alternativos: separe com  |      oeufs | douzaine d'oeufs
+#  - Excluir produtos:    -palavra           fraises -yogourt -confiture
+#    (a exclusão pega o começo da palavra: -glace exclui "glacé", "glacée")
+#  - Seções:              [Frutas | Fruits]
+#  - Linhas com # são ignoradas.
 # ============================================================
 
-[Frutas]
-Banana = bananes | banane -chips -pain -muffin -yogourt -barre -saveur
-Maçã = pommes | pomme -terre -jus -compote -croustilles -chips -saveur -tarte
-Morango = fraises | fraise -yogourt -confiture -saveur -jus -gelee -tarte -barre
-Uva = raisins -secs -sec -jus -pain
-Laranja / Clementina = oranges | clementines | mandarines -jus -saveur
-Abacate = avocats | avocat -huile -guacamole
-Manga = mangues | mangue -jus -sechee -saveur -sorbet
-Abacaxi = ananas -jus -conserve -saveur
-Mirtilo (blueberry) = bleuets -muffin -yogourt -confiture -saveur -barre -jus
+[Frutas | Fruits]
+Banana | Bananes = bananes | banane -chips -pain -muffin -yogourt -barre -saveur -seche
+Maçã | Pommes = pommes | pomme -terre -jus -compote -croustille -chips -saveur -tarte -cidre -vinaigre
+Morango | Fraises = fraises | fraise -yogourt -confiture -saveur -jus -gelee -tarte -barre -boisson
+Uva | Raisins = raisins -sec -jus -pain -tomate -vin
+Laranja / Clementina | Oranges / Clémentines = oranges | clementines | mandarines -jus -saveur -boisson
+Abacate | Avocats = avocats | avocat -huile -guacamole -kiwi
+Manga | Mangues = mangues | mangue -jus -seche -saveur -sorbet -boisson -smoothie
+Abacaxi | Ananas = ananas -jus -conserve -saveur -boisson
+Mirtilo | Bleuets = bleuets -muffin -yogourt -confiture -saveur -barre -jus -cereale
 
-[Carnes]
-Peito de frango = poitrines de poulet | poitrine de poulet -bouillon -soupe -panees -nuggets
-Coxa / sobrecoxa de frango = cuisses de poulet | hauts de cuisses -bouillon -soupe
-Frango inteiro = poulet entier
-Carne moída = boeuf hache -lasagne -sauce -burger -galettes
-Bife / steak = bifteck | steak -sauce -epices -assaisonnement -hache
-Picanha / rosbife (surlonge) = surlonge | roti de boeuf -sauce
-Porco (lombo / costeleta) = longe de porc | cotelettes de porc | filet de porc -sauce
-Costelinha de porco = cotes levees -sauce
+[Carnes | Viandes]
+Peito de frango | Poitrines de poulet = poitrines de poulet | poitrine de poulet -bouillon -soupe -pane -nugget -croquette -cuit -roti -tranche -charcuterie
+Coxa / sobrecoxa | Cuisses de poulet = cuisses de poulet | hauts de cuisses -bouillon -soupe -pane -cuit
+Frango inteiro | Poulet entier = poulet entier -roti -cuit -barbecue -bbq
+Carne moída | Bœuf haché = boeuf hache -lasagne -sauce -burger -galette -pate
+Bife / steak | Biftecks = bifteck | steak -sauce -epice -assaisonnement -hache -jambon -saumon -thon -chou -porc -frite
+Rosbife / surlonge | Rôti / surlonge = surlonge | roti de boeuf -sauce -sandwich -tranche
+Porco (lombo / costeleta) | Porc (longe / côtelettes) = longe de porc | cotelettes de porc | filet de porc -sauce -bacon
+Costelinha de porco | Côtes levées = cotes levees -sauce -cuite -precuite
 
-[Peixes]
-Salmão = saumon -fume -sushi -nourriture
-Camarão = crevettes -sushi -chips
+[Peixes | Poissons]
+Salmão | Saumon = saumon -fume -sushi -nourriture -chat -conserve
+Camarão | Crevettes = crevettes -sushi -chips -surimi -goberge -croustille -melange
 
-[Outros]
-Ovos = oeufs -chocolat -paques
-Leite = lait -chocolat -amande -avoine -soya -coco -chevre -savon -corps -bain
+[Outros | Autres]
+Ovos | Œufs = oeufs | douzaine d'oeufs -chocolat -paques -marine -nouille -mayonnaise -cuit
+Leite | Lait = lait -chocolat -amande -avoine -soya -coco -chevre -savon -corps -bain -veau -glace -croute -frappe -aromatise -fouette -beurre -poudre -condense
