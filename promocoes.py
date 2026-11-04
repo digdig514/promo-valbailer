@@ -10,6 +10,7 @@ COMO USAR
 
     Gera:  relatorio_promocoes.html  (o app — abre sozinho no navegador)
            dados.json                (todas as ofertas, para quem quiser usar)
+           manifest.webmanifest, sw.js e ícones (para instalar na tela de início)
 
 OPÇÕES
     --cp G3K2S5       código postal (os folhetos variam por região)
@@ -634,6 +635,105 @@ def gerar_app(modelo: str, dados: dict) -> str:
     return modelo.replace("/*__DADOS__*/null", js, 1)
 
 
+# ----------------------------------------------------------------- app instalável (PWA)
+MANIFEST = {
+    "name": "Aubaines Val-Bélair",
+    "short_name": "Aubaines",
+    "description": "Circulaires de Maxi, Metro, IGA et Super C comparées chaque jour.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f6f7fb",
+    "theme_color": "#4f46e5",
+    "lang": "fr-CA",
+    "icons": [
+        {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    ],
+}
+
+SERVICE_WORKER = """// Aubaines Val-Bélair — rede primeiro (dados frescos), cache se estiver offline
+const CACHE = 'aubaines-v2';
+const BASE = ['./', './manifest.webmanifest', './icon-192.png'];
+self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).catch(() => {})); });
+self.addEventListener('activate', e => e.waitUntil(
+  caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  e.respondWith(fetch(req).then(res => {
+    if (res.ok) { const copia = res.clone(); caches.open(CACHE).then(c => c.put(req, copia)); }
+    return res;
+  }).catch(() => caches.match(req).then(r => r || caches.match('./'))));
+});
+"""
+
+
+def png_icone(tam: int, cantos: bool = True) -> bytes:
+    """Ícone índigo com sinal de % (desenhado com a biblioteca padrão)."""
+    import struct
+    import zlib
+    c1, c2 = (67, 56, 202), (124, 58, 237)
+    raio = tam * 0.22 if cantos else 0
+    esc = 0.78 if cantos else 0.62            # maskable: desenho menor (zona segura)
+    cx = cy = tam / 2
+    d = tam * 0.17 * esc / 0.78
+    ro, ri = tam * 0.105 * esc / 0.78, tam * 0.055 * esc / 0.78
+    w = tam * 0.075 * esc / 0.78
+    ax, ay, bx, by = cx - tam * 0.2 * esc / 0.78, cy + tam * 0.25 * esc / 0.78, cx + tam * 0.2 * esc / 0.78, cy - tam * 0.25 * esc / 0.78
+    vx, vy = bx - ax, by - ay
+    vv = vx * vx + vy * vy
+
+    def cl(v):
+        return 0.0 if v < 0 else 1.0 if v > 1 else v
+
+    linhas = []
+    for y in range(tam):
+        row = bytearray(b"\x00")
+        py = y + 0.5
+        for x in range(tam):
+            px = x + 0.5
+            a = 1.0
+            if raio:
+                qx = raio - px if px < raio else px - (tam - raio) if px > tam - raio else 0
+                qy = raio - py if py < raio else py - (tam - raio) if py > tam - raio else 0
+                if qx > 0 and qy > 0:
+                    a = cl(raio - (qx * qx + qy * qy) ** 0.5 + 0.5)
+            t = (px + py) / (2 * tam)
+            r = c1[0] + (c2[0] - c1[0]) * t
+            g = c1[1] + (c2[1] - c1[1]) * t
+            b = c1[2] + (c2[2] - c1[2]) * t
+            cov = 0.0
+            for ox, oy in ((cx - d, cy - d), (cx + d, cy + d)):
+                dd = ((px - ox) ** 2 + (py - oy) ** 2) ** 0.5
+                cov = max(cov, min(cl(ro - dd + 0.5), cl(dd - ri + 0.5)))
+            u = cl(((px - ax) * vx + (py - ay) * vy) / vv)
+            dl = ((px - ax - u * vx) ** 2 + (py - ay - u * vy) ** 2) ** 0.5
+            cov = max(cov, cl(w / 2 - dl + 0.5))
+            r, g, b = r + (255 - r) * cov, g + (255 - g) * cov, b + (255 - b) * cov
+            row += bytes((int(r), int(g), int(b), int(a * 255)))
+        linhas.append(bytes(row))
+
+    def bloco(tipo, dados):
+        c = struct.pack(">I", len(dados)) + tipo + dados
+        return c + struct.pack(">I", zlib.crc32(tipo + dados) & 0xFFFFFFFF)
+
+    return (b"\x89PNG\r\n\x1a\n" + bloco(b"IHDR", struct.pack(">IIBBBBB", tam, tam, 8, 6, 0, 0, 0))
+            + bloco(b"IDAT", zlib.compress(b"".join(linhas), 9)) + bloco(b"IEND", b""))
+
+
+def escrever_pwa(pasta: Path) -> None:
+    (pasta / "manifest.webmanifest").write_text(
+        json.dumps(MANIFEST, ensure_ascii=False, indent=1), "utf-8")
+    (pasta / "sw.js").write_text(SERVICE_WORKER, "utf-8")
+    for nome, tam, cantos in (("icon-192.png", 192, True), ("icon-512.png", 512, True),
+                              ("icon-maskable-512.png", 512, False), ("apple-touch-icon.png", 180, False)):
+        arq = pasta / nome
+        if not arq.exists():
+            arq.write_bytes(png_icone(tam, cantos))
+
+
 # ----------------------------------------------------------------- main
 def configurar_saida():
     for s in (sys.stdout, sys.stderr):
@@ -688,6 +788,7 @@ def main(argv=None) -> int:
     saida.write_text(gerar_app(Path(args.modelo).read_text("utf-8"), dados), "utf-8")
     (saida.parent / "dados.json").write_text(
         json.dumps(dados, ensure_ascii=False, separators=(",", ":")), "utf-8")
+    escrever_pwa(saida.parent)
 
     resultados = analisar(lista, pool, agora)
     if args.csv:
