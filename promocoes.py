@@ -1,1165 +1,846 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Aubaines Val-Bélair — par ZeloClass</title>
-<meta name="description" content="Les circulaires de Maxi, Metro, IGA et Super C comparées chaque jour pour Val-Bélair : recherche, filtres, panier personnel et liste d'épicerie.">
-<meta name="theme-color" content="#4f46e5">
-<meta property="og:title" content="Aubaines Val-Bélair">
-<meta property="og:description" content="Maxi, Metro, IGA et Super C comparés chaque jour. Trouvez le meilleur prix et faites votre liste.">
-<meta property="og:type" content="website">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png" type="image/png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Aubaines">
-<meta name="apple-mobile-web-app-status-bar-style" content="default">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-:root{
-  --brand:#4f46e5;--brand-d:#4338ca;--brand-dd:#3730a3;--brand-l:#eef2ff;--brand-m:#e0e7ff;
-  --ink:#0f172a;--ink2:#334155;--mut:#64748b;--line:#e5e7eb;--bg:#f6f7fb;--card:#fff;--soft:#f8fafc;--soft2:#fafafa;
-  --solid:#0f172a;--solidtx:#fff;--bar:rgba(255,255,255,.9);
-  --ok:#15803d;--okbg:#f0fdf4;--warn:#92400e;--warnbg:#fffbeb;--warnline:#fde68a;--deal:#e11d48;
-  --r:16px;--sh:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.06);color-scheme:light;
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+promocoes.py — coleta os folhetos (circulaires) da semana do Maxi, Metro, IGA e
+Super C e gera o app "Aubaines Val-Bélair" (uma página HTML com busca e filtros).
+
+COMO USAR
+    Windows:      py promocoes.py
+    Mac / Linux:  python3 promocoes.py
+
+    Gera:  relatorio_promocoes.html  (o app — abre sozinho no navegador)
+           dados.json                (todas as ofertas, para quem quiser usar)
+           manifest.webmanifest, sw.js e ícones (para instalar na tela de início)
+
+OPÇÕES
+    --cp G3K2S5       código postal (os folhetos variam por região)
+    --lista ARQUIVO   cesta básica comparada na aba "Où magasiner"
+    --saida ARQUIVO   onde salvar o app (no GitHub: site/index.html)
+    --csv             também salva uma planilha .csv da cesta
+    --sem-cache       ignora o cache (6 h) e busca tudo de novo
+    --nao-abrir       não abre o navegador no final
+
+ARQUIVOS NECESSÁRIOS NA MESMA PASTA
+    promocoes.py, modelo_app.html, lista_compras.txt
+
+FONTE DOS DADOS
+    Os mesmos folhetos públicos usados pelo site/app Flipp (não é API oficial).
+    Usa só a biblioteca padrão do Python 3.8+.
+"""
+from __future__ import annotations
+
+import argparse
+import csv
+import datetime as dt
+import hashlib
+import json
+import re
+import ssl
+import sys
+import time
+import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
+import webbrowser
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from pathlib import Path
+
+# =====================================================================
+#  CONFIGURAÇÃO
+# =====================================================================
+
+CODIGO_POSTAL = "G3K 2S5"
+
+# Região mostrada no app e endereço público do site (usado nas prévias do WhatsApp/Facebook).
+# Quando o subdomínio estiver pronto, troque URL_SITE (ex.: "https://aubaines.zeloclass.com/").
+REGIAO = {"nome": "Région de Québec", "referencia": "Val-Bélair"}
+URL_SITE = "https://digdig514.github.io/promo-valbailer/"
+
+# Lojas comparadas. "padrao" identifica a rede pelo nome no folheto.
+# Para incluir outra rede, copie uma linha. Ex.:
+#   "Provigo": {"padrao": r"^provigo\b", "cor": "#6d28d9", "endereco": "..."},
+LOJAS = {
+    "Maxi":    {"padrao": r"^maxi\b",      "cor": "#b45309",
+                "endereco": "1065, boul. Pie-XI Nord, Val-Bélair"},
+    "Metro":   {"padrao": r"^metro\b",     "cor": "#0369a1",
+                "endereco": "Metro Plus — 1370, boul. Pie-XI Nord, Val-Bélair"},
+    "IGA":     {"padrao": r"^iga\b",       "cor": "#be123c",
+                "endereco": "IGA Extra — 1819, av. Industrielle, Val-Bélair"},
+    "Super C": {"padrao": r"^super\s?c\b", "cor": "#15803d",
+                "endereco": "4545, boul. de l'Auvergne, Neufchâtel (~6 km)"},
 }
-html[data-theme=dark]{
-  --brand-d:#a5b4fc;--brand-dd:#c7d2fe;--brand-l:#1e1b4b;--brand-m:#312e81;
-  --ink:#e5e7eb;--ink2:#cbd5e1;--mut:#94a3b8;--line:#243049;--bg:#0b1020;--card:#131a2e;--soft:#0f1527;--soft2:#172036;
-  --solid:#e5e7eb;--solidtx:#0b1020;--bar:rgba(11,16,32,.86);
-  --ok:#4ade80;--okbg:#052e16;--warn:#fcd34d;--warnbg:#2a1d06;--warnline:#78350f;
-  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);color-scheme:dark;
-}
-@media (prefers-color-scheme:dark){html[data-theme=auto]{
-  --brand-d:#a5b4fc;--brand-dd:#c7d2fe;--brand-l:#1e1b4b;--brand-m:#312e81;
-  --ink:#e5e7eb;--ink2:#cbd5e1;--mut:#94a3b8;--line:#243049;--bg:#0b1020;--card:#131a2e;--soft:#0f1527;--soft2:#172036;
-  --solid:#e5e7eb;--solidtx:#0b1020;--bar:rgba(11,16,32,.86);
-  --ok:#4ade80;--okbg:#052e16;--warn:#fcd34d;--warnbg:#2a1d06;--warnline:#78350f;
-  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);color-scheme:dark;
-}}
-*{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%;scroll-padding-top:120px}
-body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.45}
-button,input,select{font:inherit;color:inherit}
-button{-webkit-tap-highlight-color:transparent}
-a{color:var(--brand-d)}
-.wrap{max-width:1180px;margin:0 auto;padding:0 16px}
-.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.bar{position:sticky;top:0;z-index:30;background:var(--bar);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
-.bar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;min-width:0}
-.mark{flex:none;width:36px;height:36px;border-radius:11px;background:url(icon-192.png) center/cover,linear-gradient(135deg,var(--brand),#7c3aed);display:grid;place-items:center;color:transparent;font-weight:800;font-size:18px;box-shadow:0 4px 12px rgba(79,70,229,.35)}
-.brand b{display:block;font-size:16px;letter-spacing:-.01em;white-space:nowrap}
-.brand small{display:block;font-size:12px;color:var(--mut);white-space:nowrap}
-.brand small a{color:var(--brand);font-weight:700;text-decoration:none}
-.seg{display:flex;background:var(--brand-l);border-radius:999px;padding:3px;flex:none}
-.seg button{border:0;background:transparent;padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px;color:var(--brand-d);cursor:pointer}
-.seg button[aria-pressed=true]{background:var(--brand);color:#fff;box-shadow:0 1px 3px rgba(15,23,42,.18)}
-.hero{margin:18px 0 6px;border-radius:24px;padding:26px 24px 22px;color:#fff;position:relative;overflow:hidden;
-  background:radial-gradient(900px 260px at 100% 0,rgba(167,139,250,.55),transparent 60%),linear-gradient(135deg,#3730a3,#4f46e5 55%,#6366f1)}
-.hero::after{content:"";position:absolute;right:-60px;bottom:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.07)}
-.hero h1{margin:0 0 6px;font-size:clamp(22px,4vw,34px);line-height:1.12;letter-spacing:-.025em;font-weight:800;max-width:760px}
-.hero p{margin:0;opacity:.92;max-width:640px}
-.weeks{display:inline-flex;gap:4px;margin-top:18px;background:rgba(255,255,255,.16);padding:4px;border-radius:14px;flex-wrap:wrap;position:relative;z-index:1}
-.weeks button{border:0;background:transparent;color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;text-align:left;line-height:1.25}
-.weeks button b{display:block;font-size:14px}
-.weeks button small{opacity:.85;font-size:12px}
-.weeks button[aria-pressed=true]{background:#fff;color:#4338ca}
-.weeks button[disabled]{opacity:.55;cursor:default}
-.stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-size:13px;opacity:.95;position:relative;z-index:1}
-.stats b{font-size:20px;display:block;letter-spacing:-.02em}
-.banner{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--warnbg);color:var(--warn);border:1px solid var(--warnline);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-weight:500}
-.banner .bb{display:flex;gap:8px;flex-wrap:wrap}
-.banner button{border:0;background:var(--warn);color:var(--warnbg);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
-.banner button.ghost{background:transparent;color:var(--warn);border:1px solid var(--warnline)}
-.banner.brandb{background:var(--brand-l);color:var(--brand-dd);border-color:var(--brand-m)}
-.banner.brandb button{background:var(--brand);color:#fff}
-.banner.brandb button.ghost{background:transparent;color:var(--brand-dd);border-color:var(--brand-m)}
-.tabs{position:sticky;top:60px;z-index:20;background:var(--bg);display:flex;gap:6px;padding:12px 0 10px;overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tabs button{border:1px solid var(--line);background:var(--card);padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--ink2)}
-.tabs button[aria-selected=true]{background:var(--solid);border-color:var(--solid);color:var(--solidtx)}
-.count{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--brand);color:#fff;font-size:12px;line-height:20px;text-align:center}
-.tabs button[aria-selected=true] .count{background:var(--solidtx);color:var(--solid)}
-.filters{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--sh);display:grid;gap:10px}
-.search{position:relative}
-.search input{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 40px 12px 42px;font-size:16px;background:var(--soft);outline:none;-webkit-appearance:none}
-.search input:focus{border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px var(--brand-m)}
-.search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none}
-input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
-.search .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;line-height:1;color:var(--mut);cursor:pointer;padding:6px 8px;display:none}
-.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
-.chips.wrapc{flex-wrap:wrap;overflow:visible}
-.chips::-webkit-scrollbar{display:none}
-.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-.chip[aria-pressed=true]{background:var(--brand-l);border-color:var(--brand);color:var(--brand-dd)}
-.chip.neg[aria-pressed=true]{background:var(--soft2);border-color:var(--mut);color:var(--mut);text-decoration:line-through}
-.chip .dot{width:9px;height:9px;border-radius:50%}
-.chip .n{color:var(--mut);font-size:12px}
-.row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.sel{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--card);cursor:pointer}
-.switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
-.switch input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}
-.metaline{color:var(--mut);font-size:13px;margin:14px 2px 10px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh);transition:transform .12s ease,box-shadow .12s ease}
-.card:hover{transform:translateY(-2px)}
-.ph{position:relative;aspect-ratio:4/3;background:#fff;display:grid;place-items:center;border-bottom:1px solid var(--line)}
-.ph img{width:100%;height:100%;object-fit:contain;padding:10px}
-.emo{font-size:46px}
-.disc{position:absolute;top:10px;left:10px;background:var(--deal);color:#fff;font-weight:800;font-size:13px;padding:3px 8px;border-radius:8px}
-.low{position:absolute;bottom:8px;left:8px;background:#065f46;color:#ecfdf5;font-weight:700;font-size:11.5px;padding:2px 7px;border-radius:7px}
-.store{display:inline-block;color:#fff;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--c,#475569);white-space:nowrap}
-.body{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
-.body h3{font-size:14.5px;font-weight:600;margin:4px 0 0;line-height:1.3}
-.lbl{font-size:12px;font-weight:700;color:var(--brand-d);text-transform:uppercase;letter-spacing:.04em}
-.bn{font-size:12.5px;color:var(--mut)}
-.price{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:auto;padding-top:6px;line-height:1.1}
-.price small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}
-.price .nop{font-size:15px;color:var(--deal)}
-.was{font-size:13px;color:var(--mut);text-decoration:line-through;margin-left:6px;font-weight:500;letter-spacing:0}
-.kg{font-size:12.5px;color:var(--ink2)}
-.note{font-size:12px;color:var(--warn);background:var(--warnbg);padding:3px 7px;border-radius:7px;align-self:flex-start;margin-top:2px}
-.dates{font-size:12px;color:var(--mut)}
-.acts{display:flex;gap:6px;margin-top:8px;align-items:stretch}
-.add{flex:1;border:1px solid var(--brand);color:var(--brand-d);background:var(--card);border-radius:10px;padding:8px;font-weight:600;cursor:pointer}
-.add:hover{background:var(--brand-l)}
-.add[aria-pressed=true]{background:var(--brand);color:#fff}
-.rep{border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;padding:0 10px;cursor:pointer;font-size:14px}
-.rep:hover{color:var(--deal);border-color:var(--deal)}
-.more{display:block;margin:18px auto 4px;border:0;background:var(--solid);color:var(--solidtx);border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer}
-.empty{text-align:center;color:var(--mut);padding:30px 12px}
-.empty .emo{display:block;margin-bottom:6px}
-.fy{margin:0 0 14px}
-.fy h2{font-size:18px;margin:4px 2px 8px;letter-spacing:-.01em}
-.fyrow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(178px,200px);gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
-.fyrow .card{scroll-snap-align:start}
-.fyrow .ph{aspect-ratio:16/11}
-.fyrow .price{font-size:20px}
-.cta{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--card);border:1px dashed var(--brand);border-radius:var(--r);padding:14px 16px;margin:0 0 14px}
-.cta b{display:block}
-.cta span{color:var(--mut);font-size:14px}
-.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin:0 0 12px}
-.panel h2{margin:0 0 4px;font-size:20px;letter-spacing:-.015em}
-.panel h3{margin:18px 0 4px;font-size:16px}
-.sub{color:var(--mut);font-size:14px;margin:0 0 12px}
-.rank{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
-.rk{border:1px solid var(--line);border-radius:14px;padding:14px}
-.rk.first{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-m)}
-.rk .top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.rk .big{font-size:26px;font-weight:800;letter-spacing:-.02em}
-.rk .big small{font-size:13px;color:var(--mut);font-weight:600}
-.rk .addr{font-size:12px;color:var(--mut);margin:4px 0 8px}
-.rk ul{margin:0;padding-left:18px;font-size:14px}
-.rk li{margin:2px 0}
-.pill{display:inline-block;background:var(--brand-l);color:var(--brand-dd);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
-.pill.ok{background:var(--okbg);color:var(--ok)}
-.reco{background:var(--brand-l);border-radius:12px;padding:12px 14px;margin:0 0 14px;color:var(--brand-dd);font-weight:500}
-.reco b{color:var(--ink)}
-.tips{margin:0;padding:0;list-style:none}
-.tips li{padding:9px 12px;border-radius:10px;background:var(--warnbg);color:var(--warn);margin:6px 0;font-size:14px}
-.sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:18px 0 2px;font-weight:700}
-.bi{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
-.bi h4{margin:0;font-size:15px}
-.bi .what{font-size:13px;color:var(--ink2);margin-top:2px}
-.bi .pr{text-align:right;font-weight:800;font-size:17px;white-space:nowrap}
-.bi .pr small{display:block;font-size:12px;font-weight:500;color:var(--mut)}
-.bi .pr .mini{margin-top:6px;border:1px solid var(--brand);background:var(--card);color:var(--brand-d);border-radius:8px;padding:3px 8px;font-size:12.5px;font-weight:600;cursor:pointer}
-.bi .pr .mini[aria-pressed=true]{background:var(--brand);color:#fff}
-.bi details{grid-column:1/-1}
-details summary{cursor:pointer;color:var(--brand-d);font-size:13px;font-weight:600;list-style:none}
-details summary::-webkit-details-marker{display:none}
-details summary::before{content:"▸ "}
-details[open] summary::before{content:"▾ "}
-.ol{margin:6px 0 0;padding:0;list-style:none}
-.ol li{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
-.ol li span:last-child{white-space:nowrap;font-weight:600}
-.none{color:var(--mut);font-style:italic;font-size:14px}
-.lg{border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}
-.lg header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;background:var(--soft2);border-bottom:1px solid var(--line)}
-.lg header small{color:var(--mut);text-align:right}
-.li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line)}
-.li:first-of-type{border-top:0}
-.li input{width:20px;height:20px;margin-top:2px;accent-color:var(--brand);flex:none}
-.li .t{flex:1;min-width:0}
-.li .t b{font-weight:600;display:block}
-.li .t small{color:var(--mut)}
-.li .p{font-weight:700;white-space:nowrap}
-.li.done .t b{text-decoration:line-through;color:var(--mut)}
-.li.exp{opacity:.55}
-.rm{border:0;background:transparent;color:var(--mut);font-size:18px;cursor:pointer;padding:0 4px}
-.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--ink);display:inline-block}
-.btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
-.btn.danger{color:var(--deal)}
-.inp{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;font-size:16px;outline:none;width:100%}
-.inp:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-m)}
-.addw{display:flex;gap:8px}
-.bl{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-.bl .chip{cursor:default}
-.bl .chip button{border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 2px}
-.pgrid{display:grid;gap:4px}
-.small{font-size:13px;color:var(--mut)}
-footer{margin-top:28px;border-top:1px solid var(--line);background:var(--card)}
-footer .wrap{padding:24px 16px 40px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));font-size:13.5px;color:var(--ink2)}
-footer h5{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
-footer p{margin:0 0 6px}
-footer ul{margin:0;padding:0;list-style:none}
-footer li{margin:4px 0}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--solid);color:var(--solidtx);padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:50}
-.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-@media (max-width:600px){
-  .hero{padding:20px 18px 18px;border-radius:20px;margin-top:12px}
-  .hero h1{font-size:21px}
-  .hero p{font-size:13.5px}
-  .weeks{display:flex;margin-top:12px}
-  .weeks button{flex:1;padding:7px 10px}
-  .stats{gap:18px;margin-top:12px}
-  .stats b{font-size:17px}
-  .banner{padding:10px 12px;font-size:14px}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .body{padding:10px}
-  .price{font-size:19px}
-  .brand b{font-size:15px}
-  .panel{padding:14px}
-}
-</style>
-</head>
-<body>
-<header class="bar"><div class="wrap">
-  <div class="brand">
-    <span class="mark" aria-hidden="true">%</span>
-    <span><b data-t="product">Aubaines Val-Bélair</b><small><span data-t="by">par</span> <a href="https://zeloclass.com" target="_blank" rel="noopener">ZeloClass</a></small></span>
-  </div>
-  <div class="seg" role="group" aria-label="Langue / Idioma">
-    <button data-lang="fr">FR</button><button data-lang="pt">PT</button>
-  </div>
-</div></header>
 
-<div class="wrap">
-  <section class="hero">
-    <h1 id="h1"></h1>
-    <p id="hsub"></p>
-    <div class="weeks" id="weeks" role="group"></div>
-    <div class="stats" id="stats"></div>
-  </section>
-  <div id="banner"></div>
+# Buscas extras para completar preço por lb/kg e rabais dos produtos frescos.
+BUSCAS_EXTRAS = (
+    "poulet boeuf porc dinde agneau veau saumon crevettes poisson jambon saucisses bacon "
+    "pommes bananes fraises raisins oranges clementines poires bleuets framboises melon "
+    "tomates laitue brocoli carottes oignons poivrons concombres champignons patates "
+    "lait fromage yogourt oeufs beurre pain cafe"
+).split()
 
-  <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="deals" data-t="tab_deals"></button>
-    <button role="tab" data-tab="where" data-t="tab_where"></button>
-    <button role="tab" data-tab="list"><span data-t="tab_list"></span><span class="count" id="listcount" hidden></span></button>
-    <button role="tab" data-tab="prof" data-t="tab_prof"></button>
-  </nav>
+# Categorias (palavras em francês, sem acento). A ordem importa: a primeira que casar vence.
+CATEGORIAS = [
+    ("menage", "detergent lessive savon shampooing revitalisant dentifrice brosse deodorant couche "
+               "couches lingette lingettes papier essuie-tout mouchoir mouchoirs nettoyant javellisant "
+               "poubelle assouplissant vaisselle pile piles ampoule rasoir hygienique tampon lotion "
+               "litiere chat chien pharmacie vitamine"),
+    ("boissons", "jus boisson boissons eau gazeuse soda cola liqueur biere vin cidre kombucha "
+                 "energisante limonade"),
+    ("boulangerie", "pain pains bagel bagels croissant croissants muffin muffins tortilla tortillas "
+                    "pita brioche baguette gateau beigne beignes tarte"),
+    ("surgeles", "surgele surgeles surgelee surgelees congele congelee glacee frites pizza pizzas "
+                 "pogo"),
+    ("epicerie", "pate pates spaghetti macaroni nouille nouilles riz cereale cereales gruau farine "
+                 "sucre sel huile vinaigre cafe tisane biscuit biscuits craquelin craquelins "
+                 "croustille croustilles chips chocolat bonbon bonbons soupe bouillon conserve sauce "
+                 "ketchup moutarde mayonnaise vinaigrette confiture miel arachide noix amandes "
+                 "collation barre barres granola popcorn olive olives cornichon cornichons epice "
+                 "epices assaisonnement levure tartinade sirop compote"),
+    ("laitiers", "lait fromage fromages yogourt yogourts yaourt beurre creme margarine oeuf oeufs "
+                 "kefir cottage ricotta mozzarella cheddar"),
+    ("poissons", "saumon crevette crevettes morue tilapia aiglefin truite petoncle petoncles homard "
+                 "crabe moule moules poisson poissons thon sole fletan goberge surimi"),
+    ("viandes", "boeuf porc poulet dinde agneau veau bifteck biftecks steak hache cotelette "
+                "cotelettes longe saucisse saucisses jambon roti ailes aile cuisse cuisses poitrine "
+                "poitrines bacon surlonge filet cote cotes viande charcuterie salami pepperoni"),
+    ("legumes", "tomate tomates laitue brocoli carotte carottes oignon oignons poivron poivrons "
+                "concombre concombres champignon champignons chou celeri courgette courgettes "
+                "epinard epinards asperge asperges haricot haricots aubergine radis patate patates "
+                "terre courge ail salade chou-fleur betterave betteraves navet poireau poireaux "
+                "legume legumes"),
+    ("fruits", "pomme pommes banane bananes fraise fraises raisin raisins orange oranges clementine "
+               "clementines mandarine mandarines mangue mangues ananas poire poires bleuet bleuets "
+               "framboise framboises mure mures avocat avocats kiwi kiwis melon melons cantaloup "
+               "peche peches prune prunes nectarine cerise cerises citron citrons lime limes "
+               "pamplemousse grenade papaye fruit fruits"),
+]
 
-  <section id="p-deals">
-    <div id="foryou"></div>
-    <div class="filters">
-      <div class="search">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-        <label class="sr" for="q" data-t="search_ph"></label>
-        <input id="q" type="search" autocomplete="off" enterkeyhint="search">
-        <button class="x" id="qx" aria-label="×">×</button>
-      </div>
-      <div class="chips" id="stores"></div>
-      <div class="chips" id="cats"></div>
-      <div class="row">
-        <label class="switch"><input type="checkbox" id="onlydisc"><span data-t="only_disc"></span></label>
-        <label><span class="sr" data-t="sort"></span><select class="sel" id="sort"></select></label>
-      </div>
-    </div>
-    <div class="metaline" id="resinfo"></div>
-    <div class="grid" id="grid"></div>
-    <button class="more" id="more" hidden></button>
-  </section>
-  <section id="p-where" hidden></section>
-  <section id="p-list" hidden></section>
-  <section id="p-prof" hidden></section>
-</div>
+CACHE_HORAS = 6
+PAUSA_ENTRE_BUSCAS = 0.6
 
-<footer><div class="wrap">
-  <div>
-    <h5 data-t="about"></h5>
-    <p data-t="about_txt"></p>
-    <p><span data-t="made_by"></span> <a href="https://zeloclass.com" target="_blank" rel="noopener"><b>ZeloClass</b></a></p>
-  </div>
-  <div><h5 data-t="stores_title"></h5><ul id="addr"></ul></div>
-  <div>
-    <h5 data-t="contact"></h5>
-    <p data-t="contact_txt"></p>
-    <p><a class="btn" id="bugmail" href="#" data-t="contact_btn"></a></p>
-    <p class="small" id="mailtxt"></p>
-    <p class="small" data-t="notice_txt"></p>
-    <p id="updated" class="small"></p>
-  </div>
-</div></footer>
-<div class="toast" id="toast" role="status"></div>
-<input type="file" id="impfile" accept="application/json,.json" hidden>
+# =====================================================================
 
-<script>const D = /*__DADOS__*/null;</script>
-<script>
-(function () {
-'use strict';
-if (!D || !D.ofertas) { document.body.innerHTML = '<p style="padding:40px;font-family:sans-serif">Données indisponibles. Exécutez promocoes.py.</p>'; return; }
+API = "https://backflipp.wishabi.com/flipp"
+PASTA = Path(__file__).resolve().parent
+LB_POR_KG = 2.20462
+DIAS = ["seg", "ter", "qua", "qui", "sex", "sáb", "dom"]
+STOPWORDS = {"de", "du", "des", "la", "le", "les", "d", "l", "a", "au", "aux", "en", "et", "ou"}
 
-var CONTATO = ['zelobusinessapp', 'gmail.com'];
 
-/* ======================= textos ======================= */
-var T = {
-fr: {
-  product:'Aubaines Val-Bélair', by:'par',
-  hero_title:'Les meilleures aubaines de la semaine, au même endroit',
-  hero_sub:'Les circulaires de Maxi, Metro, IGA et Super C comparées pour vous chaque matin. Cherchez, filtrez et faites votre liste.',
-  hello:'Bonjour {n} 👋', hello_sub:'{k} produits de votre panier sont en rabais cette semaine dans vos magasins.', hello_sub1:'1 produit de votre panier est en rabais cette semaine dans vos magasins.', hello_sub0:'Voici les aubaines de vos magasins cette semaine.',
-  week_cur:'Cette semaine', week_next:'Semaine prochaine', not_yet:'pas encore publiée',
-  st_deals:'aubaines', st_disc:'en rabais', st_stores:'épiceries',
-  banner_next:'La nouvelle circulaire commence demain.', see_next:'Voir la semaine prochaine',
-  ob_title:'Faites-en votre propre app.', ob_txt:'Choisissez vos magasins, votre panier et vos catégories. Tout reste sur votre appareil, sans inscription.', ob_go:'Personnaliser', ob_later:'Plus tard',
-  imp_banner:'On vous a partagé un profil (panier de {n} produits, liste de {m} produits).', imp_yes:'Importer', imp_no:'Ignorer',
-  tab_deals:'Aubaines', tab_where:'Où magasiner?', tab_list:'Ma liste', tab_prof:'⚙ Mon profil',
-  search_ph:'Rechercher : poulet, fraises, café…',
-  all:'Tout', only_disc:'Rabais seulement', sort:'Trier',
-  s_auto:'Recommandé', s_disc:'Plus gros rabais', s_kg:'Meilleur prix au kg', s_price:'Prix le plus bas', s_az:'A → Z',
-  results:'{n} produits', results1:'1 produit', more:'Voir plus ({n})',
-  nothing:'Aucun produit trouvé. Essayez un autre mot ou retirez des filtres.',
-  add:'Ajouter', added:'Ajouté', each:'ch.', see_flyer:'voir circulaire', report:'Signaler un problème avec ce prix',
-  low:'📉 plus bas en {n} sem.',
-  fy:'Pour vous', fy_n:'Pour vous, {n}', fy_cta_t:'Voyez d\'abord ce qui vous intéresse', fy_cta:'Ajoutez les produits que vous achetez souvent et vos magasins préférés.',
-  c_fruits:'Fruits', c_legumes:'Légumes', c_viandes:'Viandes', c_poissons:'Poissons', c_laitiers:'Laitiers et œufs',
-  c_boulangerie:'Boulangerie', c_epicerie:'Épicerie', c_surgeles:'Surgelés', c_boissons:'Boissons', c_menage:'Maison et hygiène', c_autres:'Autres',
-  w_title_cur:'Où magasiner cette semaine?', w_title_next:'Où magasiner la semaine prochaine?',
-  w_mine:'Comparaison de <b>votre panier</b> ({n} produits).', w_comm:'Comparaison du panier de base de la communauté ({n} produits). Créez le vôtre dans « Mon profil ».',
-  w_kg:'Viandes et fruits sont comparés au kilo (1 lb = 0,454 kg).', w_stores:'Magasins comparés : {s}.',
-  w_one:'Un seul magasin? Allez chez {s} : meilleur prix pour {n} des {t} produits.',
-  w_two:'En combinant {a} + {b}, vous avez {n} produits au meilleur prix.',
-  w_best:'meilleur prix', products:'produits', product1:'produit',
-  w_addbest:'Ajouter les meilleurs prix à ma liste', w_added:'{n} produits ajoutés à votre liste', w_edit:'Modifier mon panier',
-  w_when:'Quand acheter?',
-  w_wait:'<b>{i}</b> : attendez — moins cher à partir du {d} chez {s}.',
-  w_starts:'<b>{i}</b> : en rabais à partir du {d} chez {s}.',
-  w_detail:'Le panier, produit par produit', w_none:'Pas en circulaire', w_others:'Autres offres ({n})', w_mysec:'Mes produits',
-  l_title:'Ma liste d\'épicerie', l_empty:'Votre liste est vide. Touchez « Ajouter » sur un produit, ou ajoutez d\'un coup les meilleurs prix de votre panier dans « Où magasiner? ».',
-  l_local:'Votre liste reste sur cet appareil. Aucune inscription.',
-  l_share:'Partager', l_copy:'Copier la liste', l_clear:'Vider', l_confirm:'Confirmer?', l_copied:'Liste copiée!',
-  l_expired:'offre terminée', l_n:'{n} produits', l_n1:'1 produit',
-  p_title:'Mon profil', p_sub:'Vos préférences restent dans le navigateur de cet appareil (IndexedDB). Aucune inscription, rien n\'est envoyé.',
-  p_name:'Votre prénom (optionnel)', p_name_ph:'ex. Diego',
-  p_stores:'Mes magasins', p_stores_sub:'Seuls ces magasins sont affichés et comparés. Aucun choisi = tous.',
-  p_fav:'Catégories favorites', p_fav_sub:'Elles apparaissent en premier dans les aubaines.',
-  p_hide:'Catégories à masquer', p_hide_sub:'Elles disparaissent des aubaines (la recherche les trouve encore).',
-  p_basket:'Mon panier', p_basket_sub:'Les produits que vous achetez souvent. Ils apparaissent dans « Pour vous » et sont comparés dans « Où magasiner? ».',
-  p_basket_empty:'Votre panier est vide : on utilise le panier de base de la communauté.', p_from_comm:'Partir du panier de base',
-  p_add_ph:'Ajouter un produit (en français) : café, fromage cheddar…', p_add:'Ajouter', p_suggest:'Suggestions :', p_tip:'Astuce : « -mot » exclut, ex. « fraises -yogourt ».',
-  p_theme:'Thème', th_auto:'Auto', th_light:'Clair', th_dark:'Sombre',
-  p_sort:'Tri par défaut',
-  p_install:'Installer sur mon téléphone', inst_btn:'Installer l\'app', inst_done:'L\'app est installée sur cet appareil ✓',
-  inst_ios:'Dans Safari, touchez le bouton Partager puis « Sur l\'écran d\'accueil ».', inst_other:'Dans le menu du navigateur, choisissez « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».',
-  inst_why:'Sur iPhone, installer l\'app évite que Safari efface vos données après 7 jours sans visite.',
-  p_backup:'Sauvegarde et transfert', p_backup_sub:'Utilisez votre profil sur un autre appareil ou partagez votre panier avec votre famille.',
-  x_link:'Lien de transfert', x_export:'Exporter (fichier)', x_import:'Importer un fichier', x_reset:'Tout effacer', x_linkcopied:'Lien copié!',
-  imported:'Profil importé ✓', saved_ok:'Enregistré ✓', bad_file:'Fichier invalide',
-  p_data:'Mes données', st_p:'Stockage protégé par le navigateur ✓', st_np:'Stockage standard du navigateur',
-  hist_n:'Historique des prix : {n} semaines enregistrées sur cet appareil.', hist_0:'L\'historique des prix commence aujourd\'hui : revenez chaque semaine pour voir les « plus bas en X semaines ».',
-  rep_subj:'Prix à vérifier', rep_intro:'Bonjour, je signale un problème avec ce produit :', rep_what:'Ce qui ne va pas :',
-  bug_subj:'Bug / suggestion', bug_intro:'Bonjour, voici mon commentaire sur Aubaines Val-Bélair :',
-  about:'À propos', about_txt:'Un outil gratuit pour la communauté de Val-Bélair. Les données sont mises à jour automatiquement chaque matin.',
-  made_by:'Une initiative', stores_title:'Magasins comparés',
-  contact:'Signaler / suggérer', contact_txt:'Un prix erroné, un bug ou une idée? Écrivez-nous.', contact_btn:'✉ Écrire à l\'équipe',
-  notice_txt:'Prix tirés des circulaires publiques; vérifiez en magasin. Certains prix exigent une carte de fidélité ou un achat minimum. Non affilié à Maxi, Metro, IGA ou Super C.',
-  updated:'Mis à jour le {d} à {h}', share_title:'Ma liste — Aubaines Val-Bélair'
-},
-pt: {
-  product:'Aubaines Val-Bélair', by:'por',
-  hero_title:'As melhores promoções da semana, num só lugar',
-  hero_sub:'Os folhetos do Maxi, Metro, IGA e Super C comparados para você toda manhã. Pesquise, filtre e monte sua lista.',
-  hello:'Olá, {n} 👋', hello_sub:'{k} produtos da sua cesta estão em promoção esta semana nas suas lojas.', hello_sub1:'1 produto da sua cesta está em promoção esta semana nas suas lojas.', hello_sub0:'Aqui estão as promoções das suas lojas esta semana.',
-  week_cur:'Esta semana', week_next:'Próxima semana', not_yet:'ainda não publicado',
-  st_deals:'ofertas', st_disc:'com desconto', st_stores:'mercados',
-  banner_next:'O folheto novo começa amanhã.', see_next:'Ver a próxima semana',
-  ob_title:'Deixe o app com a sua cara.', ob_txt:'Escolha suas lojas, sua cesta e suas categorias. Tudo fica no seu aparelho, sem cadastro.', ob_go:'Personalizar', ob_later:'Depois',
-  imp_banner:'Compartilharam um perfil com você (cesta com {n} produtos, lista com {m} produtos).', imp_yes:'Importar', imp_no:'Ignorar',
-  tab_deals:'Ofertas', tab_where:'Onde comprar?', tab_list:'Minha lista', tab_prof:'⚙ Meu perfil',
-  search_ph:'Buscar em francês: poulet, fraises…',
-  all:'Tudo', only_disc:'Só com desconto', sort:'Ordenar',
-  s_auto:'Recomendado', s_disc:'Maior desconto', s_kg:'Menor preço por kg', s_price:'Menor preço', s_az:'A → Z',
-  results:'{n} produtos', results1:'1 produto', more:'Ver mais ({n})',
-  nothing:'Nenhum produto encontrado. Tente outra palavra (em francês) ou tire filtros.',
-  add:'Adicionar', added:'Na lista', each:'cada', see_flyer:'ver folheto', report:'Relatar problema com este preço',
-  low:'📉 menor em {n} sem.',
-  fy:'Para você', fy_n:'Para você, {n}', fy_cta_t:'Veja primeiro o que interessa a você', fy_cta:'Adicione os produtos que você compra sempre e suas lojas preferidas.',
-  c_fruits:'Frutas', c_legumes:'Legumes', c_viandes:'Carnes', c_poissons:'Peixes', c_laitiers:'Laticínios e ovos',
-  c_boulangerie:'Padaria', c_epicerie:'Mercearia', c_surgeles:'Congelados', c_boissons:'Bebidas', c_menage:'Casa e higiene', c_autres:'Outros',
-  w_title_cur:'Onde comprar esta semana?', w_title_next:'Onde comprar na próxima semana?',
-  w_mine:'Comparação da <b>sua cesta</b> ({n} produtos).', w_comm:'Comparação da cesta básica da comunidade ({n} produtos). Monte a sua em “Meu perfil”.',
-  w_kg:'Carnes e frutas são comparadas por quilo (1 lb = 0,454 kg).', w_stores:'Lojas comparadas: {s}.',
-  w_one:'Uma loja só? Vá ao {s}: melhor preço em {n} dos {t} produtos.',
-  w_two:'Combinando {a} + {b}, você pega {n} produtos no melhor preço.',
-  w_best:'melhor preço', products:'produtos', product1:'produto',
-  w_addbest:'Colocar os melhores preços na minha lista', w_added:'{n} produtos adicionados à sua lista', w_edit:'Editar minha cesta',
-  w_when:'Quando comprar?',
-  w_wait:'<b>{i}</b>: espere — mais barato a partir de {d} no {s}.',
-  w_starts:'<b>{i}</b>: entra em promoção {d} no {s}.',
-  w_detail:'A cesta, item por item', w_none:'Sem promoção', w_others:'Outras ofertas ({n})', w_mysec:'Meus produtos',
-  l_title:'Minha lista de compras', l_empty:'Sua lista está vazia. Toque em “Adicionar” num produto, ou coloque de uma vez os melhores preços da sua cesta em “Onde comprar?”.',
-  l_local:'Sua lista fica só neste aparelho. Sem cadastro.',
-  l_share:'Compartilhar', l_copy:'Copiar lista', l_clear:'Limpar', l_confirm:'Confirmar?', l_copied:'Lista copiada!',
-  l_expired:'oferta encerrada', l_n:'{n} produtos', l_n1:'1 produto',
-  p_title:'Meu perfil', p_sub:'Suas preferências ficam no navegador deste aparelho (IndexedDB). Sem cadastro, nada é enviado.',
-  p_name:'Seu nome (opcional)', p_name_ph:'ex. Diego',
-  p_stores:'Minhas lojas', p_stores_sub:'Só essas lojas aparecem e são comparadas. Nenhuma escolhida = todas.',
-  p_fav:'Categorias favoritas', p_fav_sub:'Aparecem primeiro nas ofertas.',
-  p_hide:'Categorias para esconder', p_hide_sub:'Somem das ofertas (a busca ainda encontra).',
-  p_basket:'Minha cesta', p_basket_sub:'Os produtos que você compra sempre. Aparecem em “Para você” e são comparados em “Onde comprar?”.',
-  p_basket_empty:'Sua cesta está vazia: usamos a cesta básica da comunidade.', p_from_comm:'Começar pela cesta básica',
-  p_add_ph:'Adicionar produto (em francês): café, fromage cheddar…', p_add:'Adicionar', p_suggest:'Sugestões:', p_tip:'Dica: “-palavra” exclui, ex. “fraises -yogourt”.',
-  p_theme:'Tema', th_auto:'Auto', th_light:'Claro', th_dark:'Escuro',
-  p_sort:'Ordem padrão',
-  p_install:'Instalar no celular', inst_btn:'Instalar o app', inst_done:'O app está instalado neste aparelho ✓',
-  inst_ios:'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.', inst_other:'No menu do navegador, escolha “Instalar app” ou “Adicionar à tela inicial”.',
-  inst_why:'No iPhone, instalar o app evita que o Safari apague seus dados após 7 dias sem visita.',
-  p_backup:'Backup e transferência', p_backup_sub:'Use seu perfil em outro aparelho ou compartilhe sua cesta com a família.',
-  x_link:'Link de transferência', x_export:'Exportar (arquivo)', x_import:'Importar arquivo', x_reset:'Apagar tudo', x_linkcopied:'Link copiado!',
-  imported:'Perfil importado ✓', saved_ok:'Salvo ✓', bad_file:'Arquivo inválido',
-  p_data:'Meus dados', st_p:'Armazenamento protegido pelo navegador ✓', st_np:'Armazenamento padrão do navegador',
-  hist_n:'Histórico de preços: {n} semanas registradas neste aparelho.', hist_0:'O histórico de preços começa hoje: volte toda semana para ver os “menor preço em X semanas”.',
-  rep_subj:'Preço para verificar', rep_intro:'Olá, quero relatar um problema com este produto:', rep_what:'O que está errado:',
-  bug_subj:'Bug / sugestão', bug_intro:'Olá, meu comentário sobre o Aubaines Val-Bélair:',
-  about:'Sobre', about_txt:'Uma ferramenta gratuita para a comunidade de Val-Bélair. Os dados são atualizados automaticamente toda manhã.',
-  made_by:'Uma iniciativa', stores_title:'Lojas comparadas',
-  contact:'Relatar / sugerir', contact_txt:'Preço errado, bug ou ideia? Escreva para nós.', contact_btn:'✉ Escrever para a equipe',
-  notice_txt:'Preços tirados dos folhetos públicos; confira na loja. Alguns preços exigem cartão de fidelidade ou compra mínima. Sem vínculo com Maxi, Metro, IGA ou Super C.',
-  updated:'Atualizado em {d} às {h}', share_title:'Minha lista — Aubaines Val-Bélair'
-}};
-var DAYS = { fr:['dim','lun','mar','mer','jeu','ven','sam'], pt:['dom','seg','ter','qua','qui','sex','sáb'] };
-var CATS = ['fruits','legumes','viandes','poissons','laitiers','boulangerie','epicerie','surgeles','boissons','menage','autres'];
-var EMO = {fruits:'🍎',legumes:'🥦',viandes:'🥩',poissons:'🐟',laitiers:'🧀',boulangerie:'🥖',epicerie:'🥫',surgeles:'🧊',boissons:'🧃',menage:'🧴',autres:'🛒'};
+# ----------------------------------------------------------------- texto
+def norm(s: str | None) -> str:
+    s = (s or "").lower().replace("œ", "oe").replace("æ", "ae").replace("’", "'")
+    s = unicodedata.normalize("NFKD", s)
+    s = "".join(c for c in s if not unicodedata.combining(c))
+    return re.sub(r"\s+", " ", s).strip()
 
-/* ======================= utilidades ======================= */
-var LS = {
-  get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
-  del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
-};
-function $(s) { return document.querySelector(s); }
-function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
-function norm(s) { return String(s || '').toLowerCase().replace(/œ/g,'oe').replace(/æ/g,'ae').replace(/’/g,"'").normalize('NFKD').replace(/[̀-ͯ]/g,'').replace(/\s+/g,' ').trim(); }
-var STOP = {de:1,du:1,des:1,la:1,le:1,les:1,d:1,l:1,a:1,au:1,aux:1,en:1,et:1,ou:1};
-function words(t) { return norm(t).split(/[\s']+/).filter(function (w) { return w && !STOP[w]; }); }
-function reEsc(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
-function rxWord(w) { w = norm(w); var b = (w.length > 4 && /[sx]$/.test(w)) ? w.slice(0, -1) : w; return new RegExp('\\b' + reEsc(b) + '(?:e|s|x|es)?\\b'); }
-function rxPre(w) { return new RegExp('\\b' + reEsc(norm(w))); }
-function pad(n) { return (n < 10 ? '0' : '') + n; }
-function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-function money(v) { return v == null ? '—' : v.toFixed(2).replace('.', ',') + ' $'; }
-function t(k, v) { var s = (T[S.lang] && T[S.lang][k]) || T.fr[k] || k; if (v) for (var x in v) s = s.split('{' + x + '}').join(v[x]); return s; }
-function day(isoStr) { if (!isoStr) return '?'; var p = isoStr.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]); return DAYS[S.lang][d.getDay()] + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1); }
-function range(f, e) { return day(f) + ' → ' + day(e); }
-function cmpKey(a, b) { return a.key[0] - b.key[0] || a.key[1] - b.key[1]; }
-function b64e(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
-function b64d(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
-function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-/* ======================= IndexedDB (com espelho em localStorage) ======================= */
-var DB = (function () {
-  var p = null;
-  function open() {
-    if (p) return p;
-    p = new Promise(function (res, rej) {
-      if (!window.indexedDB) { rej(new Error('no idb')); return; }
-      var r;
-      try { r = indexedDB.open('aubaines-valbelair', 1); } catch (e) { rej(e); return; }
-      r.onupgradeneeded = function () {
-        var db = r.result;
-        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
-        if (!db.objectStoreNames.contains('hist')) db.createObjectStore('hist');
-      };
-      r.onsuccess = function () { res(r.result); };
-      r.onerror = function () { rej(r.error); };
-      r.onblocked = function () { rej(new Error('blocked')); };
-    });
-    p.catch(function () {});
-    return p;
-  }
-  function tx(store, mode, fn) {
-    return open().then(function (db) {
-      return new Promise(function (res, rej) {
-        var x = db.transaction(store, mode), out;
-        var rq = fn(x.objectStore(store));
-        if (rq && 'onsuccess' in rq) rq.onsuccess = function () { out = rq.result; };
-        x.oncomplete = function () { res(out); };
-        x.onerror = x.onabort = function () { rej(x.error); };
-      });
-    });
-  }
-  return {
-    get: function (k) {
-      return tx('kv', 'readonly', function (st) { return st.get(k); })
-        .then(function (v) { return v === undefined ? LS.get('zc_' + k, undefined) : v; }, function () { return LS.get('zc_' + k, undefined); });
-    },
-    set: function (k, v) { LS.set('zc_' + k, v); return tx('kv', 'readwrite', function (st) { st.put(v, k); }).catch(function () {}); },
-    histAll: function () {
-      return open().then(function (db) {
-        return new Promise(function (res) {
-          var x = db.transaction('hist', 'readonly'), out = {}, c = x.objectStore('hist').openCursor();
-          c.onsuccess = function () { var cur = c.result; if (cur) { out[cur.key] = cur.value; cur.continue(); } };
-          x.oncomplete = function () { res(out); }; x.onerror = function () { res(out); };
-        });
-      }).catch(function () { return {}; });
-    },
-    histPut: function (map) { return tx('hist', 'readwrite', function (st) { for (var k in map) st.put(map[k], k); }).catch(function () {}); },
-    wipe: function () {
-      ['profile', 'saved', 'checked', 'watch', 'lang'].forEach(function (k) { LS.del('zc_' + k); });
-      return open().then(function (db) {
-        return new Promise(function (res) {
-          var x = db.transaction(['kv', 'hist'], 'readwrite');
-          x.objectStore('kv').clear(); x.objectStore('hist').clear();
-          x.oncomplete = res; x.onerror = res;
-        });
-      }).catch(function () {});
+def rx_palavra(palavra: str) -> re.Pattern:
+    w = norm(palavra)
+    base = w[:-1] if len(w) > 4 and w[-1] in "sx" else w
+    return re.compile(r"\b" + re.escape(base) + r"(?:e|s|x|es)?\b")
+
+
+def rx_prefixo(palavra: str) -> re.Pattern:
+    return re.compile(r"\b" + re.escape(norm(palavra)))
+
+
+def palavras(texto: str) -> list[str]:
+    return [w for w in re.split(r"[\s']+", norm(texto)) if w and w not in STOPWORDS]
+
+
+def para_float(v) -> float | None:
+    if v is None or v == "":
+        return None
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = str(v).replace("\xa0", "").replace(" ", "").replace(",", ".")
+    m = re.search(r"\d+(?:\.\d+)?", s)
+    return float(m.group()) if m else None
+
+
+def dinheiro(v: float | None) -> str:
+    return "—" if v is None else f"{v:,.2f} $".replace(",", " ").replace(".", ",")
+
+
+def dia(d) -> str:
+    return "?" if d is None else f"{DIAS[d.weekday()]} {d:%d/%m}"
+
+
+def data_iso(s) -> dt.datetime | None:
+    if not s:
+        return None
+    try:
+        return dt.datetime.fromisoformat(str(s).replace("Z", "+00:00")).astimezone()
+    except ValueError:
+        return None
+
+
+def nome_exibicao(nome: str) -> str:
+    """'TOMATES ROMA | ROMA TOMATOES' -> 'Tomates roma'."""
+    n = re.split(r"\s+\|\s+", nome.strip())[0].strip(" ,")
+    letras = [c for c in n if c.isalpha()]
+    if letras and sum(c.isupper() for c in letras) / len(letras) > 0.6:
+        n = n.lower()
+        n = n[:1].upper() + n[1:]
+    return n
+
+
+# ----------------------------------------------------------------- busca
+class ErroFonte(Exception):
+    pass
+
+
+def buscar_json(url: str, usar_cache: bool = True) -> dict:
+    cache_dir = PASTA / ".cache_promocoes"
+    arq = cache_dir / (hashlib.sha1(url.encode()).hexdigest()[:20] + ".json")
+    if usar_cache and arq.exists() and time.time() - arq.stat().st_mtime < CACHE_HORAS * 3600:
+        try:
+            return json.loads(arq.read_text("utf-8"))
+        except (OSError, ValueError):
+            pass
+    req = urllib.request.Request(url, headers={
+        "User-Agent": "Mozilla/5.0 (comparateur de circulaires communautaire)",
+        "Accept": "application/json",
+    })
+    ultimo_erro = None
+    for tentativa in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=25) as r:
+                dados = json.loads(r.read().decode("utf-8"))
+            break
+        except urllib.error.URLError as e:
+            if isinstance(getattr(e, "reason", None), ssl.SSLCertVerificationError):
+                raise ErroFonte(
+                    "Erro de certificado SSL. No Mac, abra Aplicativos > Python 3.x e dê dois "
+                    "cliques em 'Install Certificates.command'; depois rode de novo.") from e
+            ultimo_erro = e
+        except (TimeoutError, ValueError, OSError) as e:
+            ultimo_erro = e
+        time.sleep(1.5 * (tentativa + 1))
+    else:
+        raise ErroFonte(f"falha em {url}: {ultimo_erro}")
+    cache_dir.mkdir(exist_ok=True)
+    try:
+        arq.write_text(json.dumps(dados), "utf-8")
+    except OSError:
+        pass
+    time.sleep(PAUSA_ENTRE_BUSCAS)
+    return dados
+
+
+def buscar_api(termo: str, cp: str, usar_cache: bool = True) -> dict:
+    q = urllib.parse.urlencode({"locale": "fr-ca", "postal_code": cp, "q": termo})
+    return buscar_json(f"{API}/items/search?{q}", usar_cache)
+
+
+def buscar_folhetos(cp: str, usar_cache: bool = True) -> list:
+    q = urllib.parse.urlencode({"locale": "fr-ca", "postal_code": cp})
+    dados = buscar_json(f"{API}/flyers?{q}", usar_cache)
+    return dados.get("flyers", []) if isinstance(dados, dict) else (dados or [])
+
+
+def buscar_itens_folheto(flyer_id, usar_cache: bool = True) -> list:
+    q = urllib.parse.urlencode({"locale": "fr-ca"})
+    dados = buscar_json(f"{API}/flyers/{int(flyer_id)}?{q}", usar_cache)
+    return dados.get("items", []) if isinstance(dados, dict) else []
+
+
+# ----------------------------------------------------------------- ofertas
+_RX_CATEG = [(c, [rx_palavra(w) for w in ws.split()]) for c, ws in CATEGORIAS]
+
+
+def categoria(nome_norm: str) -> str:
+    for cat, regs in _RX_CATEG:
+        if any(r.search(nome_norm) for r in regs):
+            return cat
+    return "autres"
+
+
+@dataclass
+class Oferta:
+    id: str
+    loja: str
+    nome: str
+    marca: str
+    preco: float | None
+    qtd: int
+    unidade: str
+    preco_un: float | None
+    preco_kg: float | None
+    kg_aprox: bool
+    preco_original: float | None
+    desconto: float | None
+    texto_pre: str
+    texto_pos: str
+    historia: str
+    inicio: dt.datetime | None
+    fim: dt.datetime | None
+    imagem: str
+    nome_norm: str = ""
+    categoria: str = "autres"
+
+    def periodo(self, agora: dt.datetime) -> str:
+        if self.fim and self.fim < agora:
+            return "expirada"
+        if self.inicio and self.inicio > agora:
+            return "proxima"
+        return "atual"
+
+    def chave_preco(self):
+        if self.preco_kg is not None:
+            return (0, self.preco_kg)
+        if self.preco_un is not None:
+            return (1, self.preco_un)
+        return (2, 0.0)
+
+    def preco_txt(self) -> str:
+        if self.preco is None:
+            return self.historia or self.texto_pre or "voir circulaire"
+        s = dinheiro(self.preco)
+        if self.qtd > 1:
+            s = f"{self.qtd} / {s}"
+        if self.unidade in ("lb", "kg"):
+            s += f" /{self.unidade}"
+        elif self.unidade == "100g":
+            s += " /100 g"
+        return s
+
+    def obs(self) -> str:
+        partes = []
+        if self.texto_pre and self.qtd == 1:
+            partes.append(self.texto_pre)
+        if self.historia:
+            partes.append(self.historia)
+        if self.texto_pos and self.unidade == "un" and \
+                norm(self.texto_pos).strip("/. ") not in ("ch", "ea", "each", "chacun", "chaque", "un"):
+            partes.append(self.texto_pos)
+        return " · ".join(partes)
+
+
+def identificar_loja(merchant: str) -> str | None:
+    m = norm(merchant)
+    for loja, cfg in LOJAS.items():
+        if re.search(cfg["padrao"], m):
+            return loja
+    return None
+
+
+def unidade_de(texto_pos: str) -> str:
+    t = norm(texto_pos)
+    achados = []
+    for rotulo, rx in (("100g", r"100\s?g\b"), ("kg", r"kg\b"), ("lb", r"\blbs?\b|livre")):
+        m = re.search(rx, t)
+        if m:
+            achados.append((m.start(), rotulo))
+    return min(achados)[1] if achados else "un"
+
+
+def peso_do_nome(nome_norm: str) -> float | None:
+    m = re.search(r"(\d+(?:[.,]\d+)?)\s*(kg|g|lb)\b", nome_norm)
+    if not m:
+        return None
+    n = float(m.group(1).replace(",", "."))
+    kg = {"kg": n, "g": n / 1000, "lb": n / LB_POR_KG}[m.group(2)]
+    return kg if 0.05 <= kg <= 20 else None
+
+
+def calc_desconto(preco, preco_un, qtd, original, historia, desconto_fonte=None) -> float | None:
+    d = None
+    if original and preco:
+        if original > preco:
+            d = 1 - preco / original
+        elif qtd > 1 and preco_un and original > preco_un:
+            d = 1 - preco_un / original
+    if d is None:
+        h = norm(historia)
+        m = re.search(r"(\d{1,2})\s*%", h)
+        if m:
+            d = int(m.group(1)) / 100
+        else:
+            m = re.search(r"(?:economisez|epargnez|save|rabais)\D{0,8}(\d+(?:[.,]\d+)?)", h)
+            if m and preco_un:
+                valor = float(m.group(1).replace(",", "."))
+                d = valor / (preco_un * max(qtd, 1) + valor)
+    if d is None and desconto_fonte not in (None, "", 0):
+        v = para_float(desconto_fonte)
+        if v:
+            d = v / 100 if v > 1 else v
+    return d if d is not None and 0.01 <= d <= 0.9 else None
+
+
+def montar_oferta(loja: str, it: dict) -> Oferta | None:
+    """Aceita item da busca (current_price, pre/post_price_text...) ou do folheto (price, discount)."""
+    nome = (it.get("name") or "").strip()
+    if not nome:
+        return None
+    nome_n = norm(nome + " " + (it.get("brand") or ""))
+    pre = (it.get("pre_price_text") or "").strip()
+    pos = (it.get("post_price_text") or "").strip()
+    historia = (it.get("sale_story") or "").strip()
+
+    qtd = 1
+    m = re.search(r"(\d+)\s*(?:/|pour\b|for\b|x\b)", norm(pre))
+    if m and 1 < int(m.group(1)) <= 12:
+        qtd = int(m.group(1))
+    if "current_price" in it:
+        preco = para_float(it.get("current_price"))
+    else:
+        bruto = str(it.get("price") or "")
+        mq = re.match(r"\s*(\d+)\s*/\s*(\d+(?:[.,]\d+)?)", bruto)
+        if mq and qtd == 1:
+            qtd, preco = int(mq.group(1)), float(mq.group(2).replace(",", "."))
+        else:
+            preco = para_float(bruto)
+    if preco is not None and preco <= 0:
+        preco = None
+
+    unidade = unidade_de(pos)
+    preco_un = preco / qtd if preco is not None else None
+    preco_kg, aprox = None, False
+    if preco_un is not None:
+        if unidade == "lb":
+            preco_kg = preco_un * LB_POR_KG
+        elif unidade == "kg":
+            preco_kg = preco_un
+        elif unidade == "100g":
+            preco_kg = preco_un * 10
+        else:
+            kg = peso_do_nome(norm(nome))
+            if kg:
+                preco_kg, aprox = preco_un / kg, True
+
+    original = para_float(it.get("original_price"))
+    img = (it.get("cutout_image_url") or it.get("clean_image_url")
+           or it.get("clipping_image_url") or "")
+    img = str(img).replace("http://", "https://", 1)
+    return Oferta(
+        id=str(it.get("id") or it.get("flyer_item_id") or abs(hash((loja, nome, preco)))),
+        loja=loja, nome=nome, marca=(it.get("brand") or "").strip(),
+        preco=preco, qtd=qtd, unidade=unidade,
+        preco_un=preco_un, preco_kg=preco_kg, kg_aprox=aprox, preco_original=original,
+        desconto=calc_desconto(preco, preco_un, qtd, original, historia, it.get("discount")),
+        texto_pre=pre, texto_pos=pos, historia=historia,
+        inicio=data_iso(it.get("valid_from")), fim=data_iso(it.get("valid_to")),
+        imagem=img if img.startswith("https://") else "",
+        nome_norm=nome_n, categoria=categoria(norm(nome)),
+    )
+
+
+CAMPOS_BUSCA = ("current_price", "pre_price_text", "post_price_text", "sale_story", "original_price")
+
+
+def coletar(cp: str, termos: list[str], usar_cache: bool, agora: dt.datetime):
+    """Folhetos completos + buscas (que trazem /lb, rabais etc.). Devolve (ofertas, falhas, nº folhetos)."""
+    brutos: dict[str, tuple[str, dict]] = {}
+    falhas: list[str] = []
+    n_folhetos = 0
+
+    # 1) folhetos inteiros
+    try:
+        folhetos = buscar_folhetos(cp, usar_cache)
+    except ErroFonte as ex:
+        if "SSL" in str(ex):
+            raise
+        folhetos = []
+        falhas.append("liste des circulaires")
+    for fl in folhetos:
+        loja = identificar_loja(str(fl.get("merchant") or fl.get("merchant_name") or ""))
+        fim = data_iso(fl.get("valid_to"))
+        if not loja or (fim and fim < agora) or not fl.get("id"):
+            continue
+        print(f"  circulaire {loja}: {fl.get('name') or fl.get('id')}")
+        try:
+            itens = buscar_itens_folheto(fl["id"], usar_cache)
+        except ErroFonte:
+            falhas.append(f"circulaire {loja}")
+            continue
+        n_folhetos += 1
+        for it in itens:
+            it = dict(it)
+            it.setdefault("valid_from", fl.get("valid_from"))
+            it.setdefault("valid_to", fl.get("valid_to"))
+            if it.get("id") is not None:
+                brutos[str(it["id"])] = (loja, it)
+
+    # 2) buscas: completam os itens do folheto e trazem os que faltarem
+    for i, t in enumerate(termos, 1):
+        print(f"  [{i:>2}/{len(termos)}] {t}", end="\r" if sys.stdout.isatty() else "\n", flush=True)
+        try:
+            dados = buscar_api(t, cp, usar_cache)
+        except ErroFonte as ex:
+            if "SSL" in str(ex):
+                raise
+            falhas.append(t)
+            continue
+        for it in dados.get("items") or []:
+            loja = identificar_loja(it.get("merchant_name") or it.get("merchant") or "")
+            if not loja:
+                continue
+            chave = str(it.get("flyer_item_id") or it.get("id"))
+            if chave in brutos:
+                base = dict(brutos[chave][1])
+                for c in CAMPOS_BUSCA:
+                    if it.get(c) not in (None, ""):
+                        base[c] = it[c]
+                if not base.get("cutout_image_url"):
+                    base["clean_image_url"] = it.get("clean_image_url")
+                brutos[chave] = (loja, base)
+            else:
+                brutos[chave] = (loja, it)
+    print(" " * 60, end="\r")
+
+    ofertas, vistos = [], set()
+    for loja, it in brutos.values():
+        o = montar_oferta(loja, it)
+        if not o or o.periodo(agora) == "expirada":
+            continue
+        k = (o.loja, o.nome_norm, o.preco, o.inicio.date() if o.inicio else None)
+        if k in vistos:
+            continue
+        vistos.add(k)
+        ofertas.append(o)
+    return ofertas, falhas, n_folhetos
+
+
+# ----------------------------------------------------------------- cesta básica
+@dataclass
+class ItemLista:
+    secao_pt: str
+    secao_fr: str
+    pt: str
+    fr: str
+    alternativas: list[str]
+    excluir: list[str]
+
+    def __post_init__(self):
+        self._regs = [r for r in ([rx_palavra(w) for w in palavras(a)] for a in self.alternativas) if r]
+        self._excl = [rx_prefixo(w) for w in self.excluir]
+
+    @property
+    def rotulo(self) -> str:
+        return self.pt
+
+    def casa(self, o: Oferta) -> bool:
+        n = o.nome_norm
+        if any(e.search(n) for e in self._excl):
+            return False
+        return any(all(r.search(n) for r in regs) for regs in self._regs)
+
+
+def _dois_nomes(texto: str) -> tuple[str, str]:
+    partes = [p.strip() for p in texto.split("|")]
+    pt = partes[0]
+    return pt, (partes[1] if len(partes) > 1 and partes[1] else pt)
+
+
+def ler_lista(caminho: Path) -> list[ItemLista]:
+    itens, sec = [], ("Minha lista", "Ma liste")
+    for linha in caminho.read_text("utf-8").splitlines():
+        l = linha.strip()
+        if not l or l.startswith("#"):
+            continue
+        if l.startswith("[") and l.endswith("]"):
+            sec = _dois_nomes(l[1:-1])
+            continue
+        rotulo, resto = (l.split("=", 1) if "=" in l else (l, l))
+        pt, fr = _dois_nomes(rotulo)
+        tokens = resto.split()
+        excluir = [t[1:] for t in tokens if t.startswith("-") and len(t) > 1]
+        texto = " ".join(t for t in tokens if not (t.startswith("-") and len(t) > 1))
+        alternativas = [a.strip() for a in texto.split("|") if a.strip()]
+        if alternativas:
+            itens.append(ItemLista(sec[0], sec[1], pt, fr, alternativas, excluir))
+    return itens
+
+
+def melhor(ofertas):
+    com_preco = sorted([o for o in ofertas if o.preco is not None], key=Oferta.chave_preco)
+    if not com_preco:
+        return [], set()
+    tipo, valor = com_preco[0].chave_preco()
+    lojas = {o.loja for o in com_preco
+             if o.chave_preco()[0] == tipo and o.chave_preco()[1] <= valor * 1.005}
+    return com_preco, lojas
+
+
+def analisar(lista, pool, agora):
+    resultados = []
+    for item in lista:
+        achadas = [o for o in pool if item.casa(o)]
+        ord_atual, lojas_atual = melhor([o for o in achadas if o.periodo(agora) == "atual"])
+        ord_prox, lojas_prox = melhor([o for o in achadas if o.periodo(agora) == "proxima"])
+        dica = ""
+        if ord_atual and ord_prox:
+            a, p = ord_atual[0].chave_preco(), ord_prox[0].chave_preco()
+            if a[0] == p[0] and p[1] < a[1] * 0.97:
+                dica = f"espere: mais barato a partir de {dia(ord_prox[0].inicio)} no {ord_prox[0].loja}"
+        elif ord_prox and not ord_atual:
+            dica = f"entra em promoção {dia(ord_prox[0].inicio)} no {ord_prox[0].loja}"
+        resultados.append({"item": item, "atual": ord_atual, "lojas_atual": lojas_atual,
+                           "proxima": ord_prox, "lojas_proxima": lojas_prox, "dica": dica})
+    return resultados
+
+
+def roteiro(resultados, periodo):
+    por_loja = defaultdict(list)
+    for r in resultados:
+        for loja in sorted(r["lojas_" + periodo]):
+            of = next(o for o in r[periodo] if o.loja == loja)
+            por_loja[loja].append((r["item"], of))
+    return dict(sorted(por_loja.items(), key=lambda kv: -len(kv[1])))
+
+
+# ----------------------------------------------------------------- exportação
+def _r2(v):
+    return None if v is None else round(v, 2)
+
+
+def exportar_dados(cp, agora, pool, lista) -> dict:
+    cont = defaultdict(Counter)
+    for o in pool:
+        if o.inicio and o.fim:
+            per = "next" if o.periodo(agora) == "proxima" else "cur"
+            cont[(o.loja, per)][(o.inicio.date().isoformat(), o.fim.date().isoformat())] += 1
+    periodos = {l: {per: (list(cont[(l, per)].most_common(1)[0][0]) if cont[(l, per)] else None)
+                    for per in ("cur", "next")} for l in LOJAS}
+
+    ofertas = []
+    for o in sorted(pool, key=lambda x: (x.loja, x.nome_norm)):
+        ofertas.append({
+            "i": o.id, "s": o.loja, "n": nome_exibicao(o.nome), "b": o.marca,
+            "k": o.nome_norm, "c": o.categoria,
+            "p": _r2(o.preco), "q": o.qtd, "u": o.unidade, "pu": _r2(o.preco_un),
+            "kg": _r2(o.preco_kg), "ka": o.kg_aprox, "o": _r2(o.preco_original),
+            "d": round(o.desconto * 100) if o.desconto else None,
+            "t": o.obs(),
+            "f": o.inicio.date().isoformat() if o.inicio else None,
+            "e": o.fim.date().isoformat() if o.fim else None,
+            "w": "next" if o.periodo(agora) == "proxima" else "cur",
+            "img": o.imagem,
+        })
+    return {
+        "v": 2,
+        "gerado": agora.isoformat(timespec="minutes"),
+        "cp": cp,
+        "regiao": REGIAO,
+        "url": URL_SITE,
+        "lojas": [{"nome": l, "cor": c["cor"], "endereco": c["endereco"]} for l, c in LOJAS.items()],
+        "periodos": periodos,
+        "cesta": [{"pt": it.pt, "fr": it.fr, "sec_pt": it.secao_pt, "sec_fr": it.secao_fr,
+                   "termos": it.alternativas, "excl": it.excluir} for it in lista],
+        "ofertas": ofertas,
     }
-  };
-})();
 
-/* ======================= dados ======================= */
-var TODAY = iso(new Date());
-var STORES = D.lojas;
-var COLOR = {}; STORES.forEach(function (s) { COLOR[s.nome] = s.cor; });
-var OF = D.ofertas.filter(function (o) { return !o.e || o.e >= TODAY; });
-OF.forEach(function (o) {
-  o.w = (o.f && o.f > TODAY) ? 'next' : 'cur';
-  o.key = o.kg != null ? [0, o.kg] : (o.pu != null ? [1, o.pu] : [2, 0]);
-  o.hk = o.s + '|' + o.k;
+
+def gerar_app(modelo: str, dados: dict) -> str:
+    js = json.dumps(dados, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+    if "/*__DADOS__*/null" not in modelo:
+        raise SystemExit("modelo_app.html não tem o marcador /*__DADOS__*/null "
+                         "(confira se o modelo_app.html e o promocoes.py não foram trocados)")
+    url = dados.get("url") or ""
+    return modelo.replace("/*__DADOS__*/null", js, 1).replace("__URL_SITE__", url)
+
+
+# ----------------------------------------------------------------- app instalável (PWA)
+MANIFEST = {
+    "name": "Aubaines Val-Bélair",
+    "short_name": "Aubaines",
+    "description": "Circulaires de Maxi, Metro, IGA et Super C comparées chaque jour.",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#f6f7fb",
+    "theme_color": "#4f46e5",
+    "lang": "fr-CA",
+    "icons": [
+        {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+        {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+        {"src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"},
+    ],
+}
+
+SERVICE_WORKER = """// Aubaines Val-Bélair — rede primeiro (dados frescos), cache se estiver offline
+const CACHE = 'aubaines-v2';
+const BASE = ['./', './manifest.webmanifest', './icon-192.png'];
+self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(BASE)).catch(() => {})); });
+self.addEventListener('activate', e => e.waitUntil(
+  caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())));
+self.addEventListener('fetch', e => {
+  const req = e.request;
+  if (req.method !== 'GET' || new URL(req.url).origin !== self.location.origin) return;
+  e.respondWith(fetch(req).then(res => {
+    if (res.ok) { const copia = res.clone(); caches.open(CACHE).then(c => c.put(req, copia)); }
+    return res;
+  }).catch(() => caches.match(req).then(r => r || caches.match('./'))));
 });
-var BYID = {}; OF.forEach(function (o) { BYID[o.i] = o; });
-function period(w) {
-  var c = {}, best = null, bn = 0;
-  OF.forEach(function (o) { if (o.w === w && o.f && o.e) { var k = o.f + '|' + o.e; c[k] = (c[k] || 0) + 1; if (c[k] > bn) { bn = c[k]; best = k; } } });
-  return best ? best.split('|') : null;
-}
-var PER = { cur: period('cur'), next: period('next') };
-var HAS_NEXT = !!PER.next;
-var COMMUNITY = D.cesta.map(function (it, i) {
-  return { id: 'c' + i, fr: it.fr, pt: it.pt, sec_fr: it.sec_fr, sec_pt: it.sec_pt, termos: it.termos, excl: it.excl || [] };
-});
-var HIST = {};
+"""
 
-/* ======================= perfil e estado ======================= */
-var params = new URLSearchParams(location.search);
-function guessLang() { return (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'fr'; }
-function defProfile() {
-  return { v: 1, name: '', lang: LS.get('zc_lang', guessLang()), stores: [], fav: [], hide: [], basket: [],
-           theme: 'auto', sort: 'auto', onboarded: false, dismissed: false };
-}
-function fixProfile(p) {
-  var d = defProfile();
-  p = p && typeof p === 'object' ? p : {};
-  for (var k in d) if (p[k] === undefined || p[k] === null) p[k] = d[k];
-  ['stores', 'fav', 'hide', 'basket'].forEach(function (k) { if (!Array.isArray(p[k])) p[k] = []; });
-  p.stores = p.stores.filter(function (s) { return COLOR[s]; });
-  if (!T[p.lang]) p.lang = 'fr';
-  return p;
-}
-var P = fixProfile(LS.get('zc_profile', null));
-var saved = LS.get('zc_saved', {}) || {};
-var checked = LS.get('zc_checked', {}) || {};
-var S = {
-  lang: params.get('lang') || P.lang,
-  week: params.get('semaine') === 'next' && HAS_NEXT ? 'next' : 'cur',
-  tab: params.get('tab') || 'deals',
-  q: params.get('q') || '', stores: {}, cat: params.get('cat') || '', sort: P.sort, disc: false, limit: 48,
-  pendingImport: null, persisted: false, confirmClear: false, confirmReset: false
-};
-if (!T[S.lang]) S.lang = 'fr';
-if (['deals', 'where', 'list', 'prof'].indexOf(S.tab) < 0) S.tab = 'deals';
 
-function migrateOld() {
-  var old = LS.get('zc_watch', null);
-  if (Array.isArray(old) && old.length && !P.basket.length) {
-    old.forEach(function (term) { var it = customItem(term); if (it) P.basket.push(it); });
-    LS.del('zc_watch');
-  }
-}
-var saveT;
-function saveProfile(quiet) {
-  P.lang = S.lang;
-  clearTimeout(saveT);
-  saveT = setTimeout(function () { DB.set('profile', P); askPersist(); if (!quiet) toast(t('saved_ok')); }, 250);
-}
-function saveList() { DB.set('saved', saved); DB.set('checked', checked); askPersist(); }
-function askPersist() {
-  if (!(navigator.storage && navigator.storage.persist)) return;
-  navigator.storage.persisted().then(function (x) { return x || navigator.storage.persist(); })
-    .then(function (x) { S.persisted = !!x; }).catch(function () {});
-}
-function applyTheme() { document.documentElement.setAttribute('data-theme', P.theme || 'auto'); }
+def png_icone(tam: int, cantos: bool = True) -> bytes:
+    """Ícone índigo com sinal de % (desenhado com a biblioteca padrão)."""
+    import struct
+    import zlib
+    c1, c2 = (67, 56, 202), (124, 58, 237)
+    raio = tam * 0.22 if cantos else 0
+    esc = 0.78 if cantos else 0.62            # maskable: desenho menor (zona segura)
+    cx = cy = tam / 2
+    d = tam * 0.17 * esc / 0.78
+    ro, ri = tam * 0.105 * esc / 0.78, tam * 0.055 * esc / 0.78
+    w = tam * 0.075 * esc / 0.78
+    ax, ay, bx, by = cx - tam * 0.2 * esc / 0.78, cy + tam * 0.25 * esc / 0.78, cx + tam * 0.2 * esc / 0.78, cy - tam * 0.25 * esc / 0.78
+    vx, vy = bx - ax, by - ay
+    vv = vx * vx + vy * vy
 
-/* ======================= cesta ======================= */
-function customItem(text) {
-  var toks = String(text || '').trim().split(/\s+/), ex = [], inc = [];
-  toks.forEach(function (w) { if (w.charAt(0) === '-' && w.length > 1) ex.push(w.slice(1)); else if (w) inc.push(w); });
-  var label = inc.join(' ').trim();
-  if (!label) return null;
-  var termos = label.split('|').map(function (s) { return s.trim(); }).filter(Boolean);
-  return { id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), fr: termos[0], pt: termos[0], termos: termos, excl: ex };
-}
-function activeBasket() { return P.basket.length ? P.basket : COMMUNITY; }
-var RXC = {};
-function rxItem(it) {
-  var k = it.termos.join('|') + '#' + (it.excl || []).join('|');
-  if (!RXC[k]) RXC[k] = {
-    regs: it.termos.map(function (a) { return words(a).map(rxWord); }).filter(function (r) { return r.length; }),
-    ex: (it.excl || []).map(rxPre)
-  };
-  return RXC[k];
-}
-function matches(it, o) {
-  var R = rxItem(it);
-  for (var i = 0; i < R.ex.length; i++) if (R.ex[i].test(o.k)) return false;
-  return R.regs.some(function (rs) { return rs.every(function (r) { return r.test(o.k); }); });
-}
-function myStore(s) { return !P.stores.length || P.stores.indexOf(s) >= 0; }
-function myStoresList() { return P.stores.length ? P.stores : STORES.map(function (s) { return s.nome; }); }
-function basket(week) {
-  return activeBasket().map(function (it) {
-    var seen = {};
-    var m = OF.filter(function (o) { return o.w === week && o.p != null && myStore(o.s) && matches(it, o); })
-      .sort(cmpKey).filter(function (o) { var k = o.s + '|' + o.n + '|' + o.p; if (seen[k]) return false; seen[k] = 1; return true; });
-    var best = m[0], tie = {};
-    if (best) m.forEach(function (o) { if (o.key[0] === best.key[0] && o.key[1] <= best.key[1] * 1.005 && !tie[o.s]) tie[o.s] = o; });
-    return { it: it, offers: m, best: best, tie: tie };
-  });
-}
-function label(it) { return S.lang === 'pt' ? (it.pt || it.fr) : (it.fr || it.pt); }
+    def cl(v):
+        return 0.0 if v < 0 else 1.0 if v > 1 else v
 
-/* ======================= histórico de preços (IndexedDB) ======================= */
-function lowWeeks(o) {
-  var h = HIST[o.hk];
-  if (!h || o.p == null) return 0;
-  var n = 0, min = Infinity;
-  for (var wk in h) {
-    if (wk === o.f) continue;
-    var e = h[wk];
-    if (e[0] !== o.key[0]) continue;
-    n++; if (e[1] < min) min = e[1];
-  }
-  return (n >= 2 && o.key[1] <= min * 1.001) ? n + 1 : 0;
-}
-function recordHistory() {
-  DB.histAll().then(function (all) {
-    var changed = {}, limite = iso(new Date(Date.now() - 200 * 864e5));
-    OF.forEach(function (o) {
-      if (o.p == null || !o.f || o.key[0] === 2) return;
-      var h = all[o.hk] || {}, cur = h[o.f], v = [o.key[0], Math.round(o.key[1] * 100) / 100];
-      if (!cur || cur[0] !== v[0] || v[1] < cur[1]) {
-        h[o.f] = v;
-        Object.keys(h).forEach(function (w) { if (w < limite) delete h[w]; });
-        all[o.hk] = h; changed[o.hk] = h;
-      }
-    });
-    HIST = all;
-    if (Object.keys(changed).length) DB.histPut(changed);
-    renderPanel();
-  });
-}
-function histWeeks() {
-  var s = {};
-  for (var k in HIST) for (var w in HIST[k]) s[w] = 1;
-  return Object.keys(s).length;
-}
+    linhas = []
+    for y in range(tam):
+        row = bytearray(b"\x00")
+        py = y + 0.5
+        for x in range(tam):
+            px = x + 0.5
+            a = 1.0
+            if raio:
+                qx = raio - px if px < raio else px - (tam - raio) if px > tam - raio else 0
+                qy = raio - py if py < raio else py - (tam - raio) if py > tam - raio else 0
+                if qx > 0 and qy > 0:
+                    a = cl(raio - (qx * qx + qy * qy) ** 0.5 + 0.5)
+            t = (px + py) / (2 * tam)
+            r = c1[0] + (c2[0] - c1[0]) * t
+            g = c1[1] + (c2[1] - c1[1]) * t
+            b = c1[2] + (c2[2] - c1[2]) * t
+            cov = 0.0
+            for ox, oy in ((cx - d, cy - d), (cx + d, cy + d)):
+                dd = ((px - ox) ** 2 + (py - oy) ** 2) ** 0.5
+                cov = max(cov, min(cl(ro - dd + 0.5), cl(dd - ri + 0.5)))
+            u = cl(((px - ax) * vx + (py - ay) * vy) / vv)
+            dl = ((px - ax - u * vx) ** 2 + (py - ay - u * vy) ** 2) ** 0.5
+            cov = max(cov, cl(w / 2 - dl + 0.5))
+            r, g, b = r + (255 - r) * cov, g + (255 - g) * cov, b + (255 - b) * cov
+            row += bytes((int(r), int(g), int(b), int(a * 255)))
+        linhas.append(bytes(row))
 
-/* ======================= formatação ======================= */
-function priceMain(o) {
-  if (o.p == null) return '<span class="nop">' + esc(o.t || t('see_flyer')) + '</span>';
-  var unit = o.u === 'lb' ? ' <small>/lb</small>' : o.u === 'kg' ? ' <small>/kg</small>' : o.u === '100g' ? ' <small>/100 g</small>' : '';
-  return (o.q > 1 ? o.q + '<small> / </small>' + money(o.p) : money(o.p)) + unit;
-}
-function priceText(o) {
-  if (o.p == null) return o.t || t('see_flyer');
-  return (o.q > 1 ? o.q + ' / ' : '') + money(o.p) + (o.u === 'lb' ? '/lb' : o.u === 'kg' ? '/kg' : o.u === '100g' ? '/100 g' : '');
-}
-function kgText(o) { return o.kg != null ? (o.ka ? '≈ ' : '') + money(o.kg) + '/kg' : ''; }
-function storeBadge(s) { return '<span class="store" style="--c:' + (COLOR[s] || '#475569') + '">' + esc(s) + '</span>'; }
-function addBtnText(on) { return on ? '✓ ' + t('added') : '+ ' + t('add'); }
+    def bloco(tipo, dados):
+        c = struct.pack(">I", len(dados)) + tipo + dados
+        return c + struct.pack(">I", zlib.crc32(tipo + dados) & 0xFFFFFFFF)
 
-function card(o, lbl) {
-  var emo = EMO[o.c] || '🛒';
-  var img = o.img ? '<img loading="lazy" src="' + esc(o.img) + '" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'block\'"><span class="emo" style="display:none">' + emo + '</span>'
-                  : '<span class="emo">' + emo + '</span>';
-  var was = (o.o && o.p && o.q === 1 && o.o > o.p) ? '<span class="was">' + money(o.o) + '</span>' : '';
-  var lw = lowWeeks(o), on = !!saved[o.i];
-  return '<article class="card"><div class="ph">' + img + (o.d ? '<span class="disc">-' + o.d + '%</span>' : '') +
-    (lw ? '<span class="low">' + t('low', { n: lw }) + '</span>' : '') + '</div>' +
-    '<div class="body">' + (lbl ? '<div class="lbl">' + esc(lbl) + '</div>' : '') + '<div>' + storeBadge(o.s) + '</div><h3>' + esc(o.n) + '</h3>' +
-    (o.b ? '<div class="bn">' + esc(o.b) + '</div>' : '') +
-    (o.t && o.p != null ? '<div class="note">' + esc(o.t) + '</div>' : '') +
-    '<div class="price">' + priceMain(o) + was + '</div>' +
-    (o.kg != null ? '<div class="kg">' + kgText(o) + '</div>' : '') +
-    (o.q > 1 && o.pu != null ? '<div class="kg">= ' + money(o.pu) + ' ' + t('each') + '</div>' : '') +
-    '<div class="dates">' + range(o.f, o.e) + '</div>' +
-    '<div class="acts"><button class="add" data-add="' + esc(o.i) + '" aria-pressed="' + on + '">' + addBtnText(on) + '</button>' +
-    '<button class="rep" data-report="' + esc(o.i) + '" title="' + esc(t('report')) + '" aria-label="' + esc(t('report')) + '">⚑</button></div>' +
-    '</div></article>';
-}
+    return (b"\x89PNG\r\n\x1a\n" + bloco(b"IHDR", struct.pack(">IIBBBBB", tam, tam, 8, 6, 0, 0, 0))
+            + bloco(b"IDAT", zlib.compress(b"".join(linhas), 9)) + bloco(b"IEND", b""))
 
-/* ======================= render: estático, hero, abas ======================= */
-function renderStatic() {
-  document.documentElement.lang = S.lang === 'pt' ? 'pt-BR' : 'fr-CA';
-  $$('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
-  $('#q').placeholder = t('search_ph');
-  $$('.seg button[data-lang]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === S.lang); });
-  var sort = $('#sort');
-  sort.innerHTML = ['auto', 'disc', 'kg', 'price', 'az'].map(function (k) { return '<option value="' + k + '">' + t('s_' + k) + '</option>'; }).join('');
-  sort.value = S.sort;
-  $('#addr').innerHTML = STORES.map(function (s) { return '<li>' + storeBadge(s.nome) + ' ' + esc(s.endereco) + '</li>'; }).join('');
-  var g = new Date(D.gerado);
-  $('#updated').textContent = isNaN(g) ? '' : t('updated', { d: day(iso(g)), h: pad(g.getHours()) + 'h' + pad(g.getMinutes()) });
-  $('#mailtxt').textContent = CONTATO.join('@');
-  $('#bugmail').href = mailto('[Aubaines] ' + t('bug_subj'), [t('bug_intro'), '', '', '—', 'Page : ' + location.href.split('#')[0],
-    'Données : ' + D.gerado, 'Appareil : ' + navigator.userAgent].join('\n'));
-}
-function heroSubCount() {
-  var n = 0;
-  basket('cur').forEach(function (r) { if (r.best && r.best.d) n++; });
-  return n;
-}
-function renderHero() {
-  if (P.name) {
-    $('#h1').textContent = t('hello', { n: P.name });
-    var k = heroSubCount();
-    $('#hsub').textContent = k === 0 ? t('hello_sub0') : k === 1 ? t('hello_sub1') : t('hello_sub', { k: k });
-  } else {
-    $('#h1').textContent = t('hero_title');
-    $('#hsub').textContent = t('hero_sub');
-  }
-  $('#weeks').innerHTML = ['cur', 'next'].map(function (w) {
-    var p = PER[w], dis = w === 'next' && !HAS_NEXT;
-    return '<button data-week="' + w + '" aria-pressed="' + (S.week === w) + '"' + (dis ? ' disabled' : '') + '><b>' + t('week_' + w) + '</b><small>' + (p ? range(p[0], p[1]) : t('not_yet')) + '</small></button>';
-  }).join('');
-  var wk = OF.filter(function (o) { return o.w === S.week && myStore(o.s); });
-  var nd = wk.filter(function (o) { return o.d; }).length, ns = {};
-  wk.forEach(function (o) { ns[o.s] = 1; });
-  $('#stats').innerHTML = '<div><b>' + wk.length + '</b>' + t('st_deals') + '</div><div><b>' + nd + '</b>' + t('st_disc') + '</div><div><b>' + Object.keys(ns).length + '</b>' + t('st_stores') + '</div>';
 
-  var b = '';
-  if (S.pendingImport) {
-    var pi = S.pendingImport;
-    b = '<div class="banner brandb"><span>' + t('imp_banner', { n: ((pi.p && pi.p.basket) || []).length, m: Object.keys(pi.s || {}).length }) + '</span>' +
-        '<span class="bb"><button id="imp-yes">' + t('imp_yes') + '</button><button class="ghost" id="imp-no">' + t('imp_no') + '</button></span></div>';
-  } else if (!P.onboarded && !P.dismissed && S.tab !== 'prof') {
-    b = '<div class="banner brandb"><span><b>' + t('ob_title') + '</b> ' + t('ob_txt') + '</span>' +
-        '<span class="bb"><button data-go="prof">' + t('ob_go') + '</button><button class="ghost" id="ob-later">' + t('ob_later') + '</button></span></div>';
-  } else if (HAS_NEXT && S.week === 'cur' && PER.cur && PER.cur[1] === TODAY) {
-    b = '<div class="banner"><span>' + t('banner_next') + '</span><span class="bb"><button data-week="next">' + t('see_next') + ' →</button></span></div>';
-  }
-  $('#banner').innerHTML = b;
-}
-function renderTabs() {
-  $$('.tabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === S.tab); });
-  ['deals', 'where', 'list', 'prof'].forEach(function (k) { $('#p-' + k).hidden = S.tab !== k; });
-  var n = Object.keys(saved).length, c = $('#listcount');
-  c.hidden = !n; c.textContent = n;
-}
+def escrever_pwa(pasta: Path) -> None:
+    (pasta / "manifest.webmanifest").write_text(
+        json.dumps(MANIFEST, ensure_ascii=False, indent=1), "utf-8")
+    (pasta / "sw.js").write_text(SERVICE_WORKER, "utf-8")
+    for nome, tam, cantos in (("icon-192.png", 192, True), ("icon-512.png", 512, True),
+                              ("icon-maskable-512.png", 512, False), ("apple-touch-icon.png", 180, False)):
+        arq = pasta / nome
+        if not arq.exists():
+            arq.write_bytes(png_icone(tam, cantos))
 
-/* ======================= aba Aubaines ======================= */
-function queryFilter(q) {
-  var inc = [], exc = [];
-  norm(q).split(/[\s']+/).forEach(function (w) {
-    if (!w) return;
-    if (w.charAt(0) === '-' && w.length > 1) exc.push(rxPre(w.slice(1)));
-    else if (!STOP[w]) inc.push(rxPre(w));
-  });
-  return function (o) {
-    for (var i = 0; i < exc.length; i++) if (exc[i].test(o.k)) return false;
-    for (var j = 0; j < inc.length; j++) if (!inc[j].test(o.k)) return false;
-    return true;
-  };
-}
-function renderForYou() {
-  var box = $('#foryou');
-  if (S.q || S.cat) { box.innerHTML = ''; return; }
-  var items = [];
-  if (P.basket.length) {
-    basket(S.week).forEach(function (r) { if (r.best) items.push({ o: r.best, l: label(r.it) }); });
-    items.sort(function (a, b) { return (b.o.d || 0) - (a.o.d || 0); });
-  } else if (P.fav.length) {
-    OF.filter(function (o) { return o.w === S.week && myStore(o.s) && o.d && P.fav.indexOf(o.c) >= 0; })
-      .sort(function (a, b) { return (b.d || 0) - (a.d || 0); }).slice(0, 12).forEach(function (o) { items.push({ o: o, l: '' }); });
-  }
-  if (items.length) {
-    box.innerHTML = '<div class="fy"><h2>' + esc(P.name ? t('fy_n', { n: P.name }) : t('fy')) + '</h2><div class="fyrow">' +
-      items.slice(0, 16).map(function (x) { return card(x.o, x.l); }).join('') + '</div></div>';
-  } else if (!P.basket.length && !P.fav.length && !P.dismissed) {
-    box.innerHTML = '<div class="cta"><div><b>' + t('fy_cta_t') + '</b><span>' + t('fy_cta') + '</span></div><button class="btn pri" data-go="prof">' + t('ob_go') + '</button></div>';
-  } else box.innerHTML = '';
-}
-function renderDeals() {
-  renderForYou();
-  var qf = queryFilter(S.q);
-  var anyStore = Object.keys(S.stores).length === 0;
-  var base = OF.filter(function (o) {
-    return o.w === S.week && myStore(o.s) && (anyStore || S.stores[o.s]) && (!S.disc || o.d) && qf(o) &&
-      (S.q || S.cat === o.c || P.hide.indexOf(o.c) < 0);
-  });
-  var counts = {}; base.forEach(function (o) { counts[o.c] = (counts[o.c] || 0) + 1; });
-  var list = S.cat ? base.filter(function (o) { return o.c === S.cat; }) : base.slice();
-  var mode = S.sort === 'auto' ? (S.q ? 'kg' : 'disc') : S.sort;
-  var fav = function (o) { return (S.sort === 'auto' && !S.q && P.fav.indexOf(o.c) >= 0) ? 0 : 1; };
-  if (mode === 'disc') list.sort(function (a, b) { return fav(a) - fav(b) || (b.d || 0) - (a.d || 0) || cmpKey(a, b); });
-  else if (mode === 'kg') list.sort(cmpKey);
-  else if (mode === 'price') list.sort(function (a, b) { return (a.pu == null) - (b.pu == null) || (a.pu || 0) - (b.pu || 0); });
-  else list.sort(function (a, b) { return a.n.localeCompare(b.n, S.lang); });
 
-  var sc = {}; OF.forEach(function (o) { if (o.w === S.week) sc[o.s] = (sc[o.s] || 0) + 1; });
-  $('#stores').innerHTML = '<button class="chip" data-store="" aria-pressed="' + anyStore + '">' + t('all') + '</button>' +
-    STORES.filter(function (s) { return myStore(s.nome); }).map(function (s) {
-      return '<button class="chip" data-store="' + esc(s.nome) + '" aria-pressed="' + !!S.stores[s.nome] + '"><span class="dot" style="background:' + s.cor + '"></span>' + esc(s.nome) + ' <span class="n">' + (sc[s.nome] || 0) + '</span></button>';
-    }).join('');
-  var cats = CATS.filter(function (c) { return counts[c] || S.cat === c; });
-  cats.sort(function (a, b) { return (P.fav.indexOf(a) < 0) - (P.fav.indexOf(b) < 0); });
-  $('#cats').innerHTML = '<button class="chip" data-cat="" aria-pressed="' + !S.cat + '">' + t('all') + ' <span class="n">' + base.length + '</span></button>' +
-    cats.map(function (c) { return '<button class="chip" data-cat="' + c + '" aria-pressed="' + (S.cat === c) + '">' + EMO[c] + ' ' + t('c_' + c) + ' <span class="n">' + (counts[c] || 0) + '</span></button>'; }).join('');
+# ----------------------------------------------------------------- main
+def configurar_saida():
+    for s in (sys.stdout, sys.stderr):
+        try:
+            s.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):
+            pass
 
-  $('#resinfo').textContent = list.length === 1 ? t('results1') : t('results', { n: list.length });
-  $('#grid').innerHTML = list.length ? list.slice(0, S.limit).map(function (o) { return card(o); }).join('')
-    : '<div class="empty" style="grid-column:1/-1"><span class="emo">🔎</span>' + t('nothing') + '</div>';
-  var rest = list.length - S.limit, more = $('#more');
-  more.hidden = rest <= 0;
-  if (rest > 0) more.textContent = t('more', { n: rest });
-  $('#qx').style.display = S.q ? 'block' : 'none';
-}
 
-/* ======================= aba Où magasiner ======================= */
-function renderWhere() {
-  var res = basket(S.week), total = res.length, mine = P.basket.length > 0;
-  var wins = {};
-  res.forEach(function (r) { Object.keys(r.tie).forEach(function (s) { (wins[s] = wins[s] || []).push(r); }); });
-  var order = Object.keys(wins).sort(function (a, b) { return wins[b].length - wins[a].length; });
-  var html = '<div class="panel"><h2>' + t(S.week === 'next' ? 'w_title_next' : 'w_title_cur') + '</h2><p class="sub">' +
-    t(mine ? 'w_mine' : 'w_comm', { n: total }) + ' ' + t('w_kg') + (P.stores.length ? ' ' + t('w_stores', { s: esc(P.stores.join(', ')) }) : '') + '</p>';
-  if (order.length) {
-    html += '<div class="reco">' + t('w_one', { s: '<b>' + esc(order[0]) + '</b>', n: wins[order[0]].length, t: total });
-    if (order.length > 1) {
-      var cov = {}; wins[order[0]].concat(wins[order[1]]).forEach(function (r) { cov[r.it.id] = 1; });
-      html += '<br>' + t('w_two', { a: '<b>' + esc(order[0]) + '</b>', b: '<b>' + esc(order[1]) + '</b>', n: Object.keys(cov).length });
-    }
-    html += '</div><div class="rank">' + order.map(function (s, i) {
-      var st = STORES.filter(function (x) { return x.nome === s; })[0] || {};
-      return '<div class="rk' + (i === 0 ? ' first' : '') + '"><div class="top">' + storeBadge(s) + (i === 0 ? '<span class="pill">#1</span>' : '') + '</div>' +
-        '<div class="big">' + wins[s].length + ' <small>' + (wins[s].length === 1 ? t('product1') : t('products')) + ' · ' + t('w_best') + '</small></div>' +
-        '<div class="addr">' + esc(st.endereco || '') + '</div><ul>' +
-        wins[s].map(function (r) { return '<li>' + esc(label(r.it)) + ' — <b>' + esc(priceText(r.tie[s])) + '</b></li>'; }).join('') + '</ul></div>';
-    }).join('') + '</div>';
-    html += '<div class="btns"><button class="btn pri" id="addbest">' + t('w_addbest') + '</button><button class="btn" data-go="prof" data-anchor="pbasket">' + t('w_edit') + '</button></div>';
-  } else {
-    html += '<p class="none">' + t('w_none') + '</p><div class="btns"><button class="btn" data-go="prof" data-anchor="pbasket">' + t('w_edit') + '</button></div>';
-  }
-  html += '</div>';
+def main(argv=None) -> int:
+    configurar_saida()
+    ap = argparse.ArgumentParser(description="Aubaines Val-Bélair: Maxi, Metro, IGA e Super C.")
+    ap.add_argument("--cp", default=CODIGO_POSTAL)
+    ap.add_argument("--lista", default=str(PASTA / "lista_compras.txt"))
+    ap.add_argument("--modelo", default=str(PASTA / "modelo_app.html"))
+    ap.add_argument("--saida", default=str(PASTA / "relatorio_promocoes.html"))
+    ap.add_argument("--csv", action="store_true")
+    ap.add_argument("--sem-cache", action="store_true")
+    ap.add_argument("--sem-destaques", action="store_true", help=argparse.SUPPRESS)  # compatibilidade
+    ap.add_argument("--nao-abrir", action="store_true")
+    args = ap.parse_args(argv)
 
-  if (S.week === 'cur' && HAS_NEXT) {
-    var nx = basket('next'), tips = [];
-    res.forEach(function (r, i) {
-      var b = nx[i].best;
-      if (!b) return;
-      if (r.best && b.key[0] === r.best.key[0] && b.key[1] < r.best.key[1] * 0.97) tips.push(t('w_wait', { i: esc(label(r.it)), d: day(b.f), s: esc(b.s) }));
-      else if (!r.best) tips.push(t('w_starts', { i: esc(label(r.it)), d: day(b.f), s: esc(b.s) }));
-    });
-    if (tips.length) html += '<div class="panel"><h2>' + t('w_when') + '</h2><ul class="tips"><li>' + tips.join('</li><li>') + '</li></ul></div>';
-  }
+    cp = re.sub(r"\s+", "", args.cp).upper()
+    if not re.fullmatch(r"[A-Z]\d[A-Z]\d[A-Z]\d", cp):
+        print(f"Código postal inválido: {args.cp}  (exemplo: G3K2S5)")
+        return 2
+    for p in (args.lista, args.modelo):
+        if not Path(p).exists():
+            print(f"Arquivo não encontrado: {p}  (deixe-o na mesma pasta do script)")
+            return 2
+    lista = ler_lista(Path(args.lista))
 
-  html += '<div class="panel"><h2>' + t('w_detail') + '</h2>';
-  var sec = null;
-  res.forEach(function (r) {
-    var s = (S.lang === 'pt' ? r.it.sec_pt : r.it.sec_fr) || t('w_mysec');
-    if (s !== sec) { sec = s; html += '<div class="sec">' + esc(s) + '</div>'; }
-    var b = r.best, lw = b ? lowWeeks(b) : 0;
-    html += '<div class="bi"><div><h4>' + esc(label(r.it)) + ' ' + (b ? Object.keys(r.tie).map(storeBadge).join(' ') : '') + (lw ? ' <span class="pill ok">' + t('low', { n: lw }) + '</span>' : '') + '</h4>' +
-      (b ? '<div class="what">' + esc(b.n) + ' · ' + range(b.f, b.e) + '</div>' : '<div class="none">' + t('w_none') + '</div>') + '</div>' +
-      '<div class="pr">' + (b ? esc(priceText(b)) + (b.kg != null ? '<small>' + kgText(b) + '</small>' : '') +
-        '<button class="mini" data-add="' + esc(b.i) + '" aria-pressed="' + !!saved[b.i] + '">' + addBtnText(!!saved[b.i]) + '</button>' : '') + '</div>';
-    if (r.offers.length > 1) {
-      html += '<details><summary>' + t('w_others', { n: r.offers.length - 1 }) + '</summary><ul class="ol">' +
-        r.offers.slice(1, 12).map(function (o) { return '<li><span>' + storeBadge(o.s) + ' ' + esc(o.n) + '</span><span>' + esc(priceText(o)) + (o.kg != null ? ' · ' + kgText(o) : '') + '</span></li>'; }).join('') + '</ul></details>';
-    }
-    html += '</div>';
-  });
-  html += '</div>';
-  $('#p-where').innerHTML = html;
-}
+    termos = []
+    for t in [a for it in lista for a in it.alternativas] + BUSCAS_EXTRAS + [l.lower() for l in LOJAS]:
+        if norm(t) not in [norm(x) for x in termos]:
+            termos.append(t)
 
-/* ======================= aba Ma liste ======================= */
-function snapshot(o) { return { s: o.s, n: o.n, pt: priceText(o), kg: kgText(o), f: o.f, e: o.e }; }
-function toggleSave(id, force) {
-  var on = force === undefined ? !saved[id] : force;
-  if (!on) { delete saved[id]; delete checked[id]; }
-  else if (BYID[id]) saved[id] = snapshot(BYID[id]);
-  saveList();
-}
-function listGroups() {
-  var g = {};
-  Object.keys(saved).forEach(function (id) {
-    var o = BYID[id], sn = saved[id];
-    var exp = !o && (!sn.e || sn.e < TODAY);
-    var item = { id: id, s: sn.s, n: sn.n, pt: o ? priceText(o) : sn.pt, kg: o ? kgText(o) : sn.kg, f: sn.f, e: sn.e, exp: exp };
-    (g[item.s] = g[item.s] || []).push(item);
-  });
-  return g;
-}
-function shareText() {
-  var g = listGroups(), lines = [t('share_title'), ''];
-  STORES.forEach(function (s) {
-    if (!g[s.nome]) return;
-    lines.push('🛒 ' + s.nome);
-    g[s.nome].forEach(function (it) { lines.push((checked[it.id] ? '☑ ' : '☐ ') + it.n + ' — ' + it.pt); });
-    lines.push('');
-  });
-  lines.push(location.href.split('?')[0].split('#')[0]);
-  return lines.join('\n');
-}
-function renderList() {
-  var g = listGroups(), n = Object.keys(saved).length;
-  var html = '<div class="panel"><h2>' + t('l_title') + '</h2><p class="sub">' + t('l_local') + '</p>';
-  if (!n) html += '<div class="empty"><span class="emo">📝</span>' + t('l_empty') + '</div>';
-  STORES.forEach(function (s) {
-    var items = g[s.nome]; if (!items) return;
-    html += '<div class="lg"><header>' + storeBadge(s.nome) + '<small>' + (items.length === 1 ? t('l_n1') : t('l_n', { n: items.length })) + ' · ' + esc(s.endereco) + '</small></header>' +
-      items.map(function (it) {
-        var done = !!checked[it.id];
-        return '<label class="li' + (done ? ' done' : '') + (it.exp ? ' exp' : '') + '"><input type="checkbox" data-check="' + esc(it.id) + '"' + (done ? ' checked' : '') + '>' +
-          '<span class="t"><b>' + esc(it.n) + '</b><small>' + (it.exp ? t('l_expired') : range(it.f, it.e)) + (it.kg ? ' · ' + esc(it.kg) : '') + '</small></span>' +
-          '<span class="p">' + esc(it.pt) + '</span><button class="rm" data-add="' + esc(it.id) + '" aria-label="×">×</button></label>';
-      }).join('') + '</div>';
-  });
-  if (n) html += '<div class="btns"><button class="btn pri" id="share">' + t('l_share') + '</button><button class="btn" id="copy">' + t('l_copy') + '</button><button class="btn danger" id="clear">' + (S.confirmClear ? t('l_confirm') : t('l_clear')) + '</button></div>';
-  html += '</div>';
-  $('#p-list').innerHTML = html;
-}
+    agora = dt.datetime.now().astimezone()
+    print(f"Coletando circulaires para {cp}...")
+    try:
+        pool, falhas, n_folhetos = coletar(cp, termos, not args.sem_cache, agora)
+    except ErroFonte as ex:
+        print("\n" + str(ex))
+        return 1
+    if not pool:
+        print("\nNenhuma oferta encontrada (sem internet, código postal errado ou a fonte mudou).")
+        return 1
 
-/* ======================= aba Mon profil ======================= */
-var deferredPrompt = null;
-window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; if (S.tab === 'prof') renderProfile(); });
-function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
-function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+    dados = exportar_dados(cp, agora, pool, lista)
+    saida = Path(args.saida)
+    saida.parent.mkdir(parents=True, exist_ok=True)
+    saida.write_text(gerar_app(Path(args.modelo).read_text("utf-8"), dados), "utf-8")
+    (saida.parent / "dados.json").write_text(
+        json.dumps(dados, ensure_ascii=False, separators=(",", ":")), "utf-8")
+    escrever_pwa(saida.parent)
 
-function chipsHTML(list, attr, selected, cls) {
-  return list.map(function (x) {
-    return '<button class="chip' + (cls ? ' ' + cls : '') + '" ' + attr + '="' + esc(x.v) + '" aria-pressed="' + (selected.indexOf(x.v) >= 0) + '">' + x.h + '</button>';
-  }).join('');
-}
-function renderProfile() {
-  var stores = STORES.map(function (s) { return { v: s.nome, h: '<span class="dot" style="background:' + s.cor + '"></span>' + esc(s.nome) }; });
-  var cats = CATS.map(function (c) { return { v: c, h: EMO[c] + ' ' + t('c_' + c) }; });
-  var inB = {}; P.basket.forEach(function (it) { inB[it.termos.join('|')] = 1; });
-  var sugg = COMMUNITY.filter(function (it) { return !inB[it.termos.join('|')]; });
-  var html = '<div class="panel"><h2>' + t('p_title') + '</h2><p class="sub">' + t('p_sub') + '</p>' +
-    '<div class="pgrid"><label class="small" for="pname">' + t('p_name') + '</label><input class="inp" id="pname" maxlength="30" autocomplete="given-name" placeholder="' + esc(t('p_name_ph')) + '" value="' + esc(P.name) + '"></div>' +
-    '<h3>' + t('p_stores') + '</h3><p class="sub">' + t('p_stores_sub') + '</p><div class="chips wrapc">' + chipsHTML(stores, 'data-pstore', P.stores) + '</div>' +
-    '<h3 id="pbasket">' + t('p_basket') + '</h3><p class="sub">' + t('p_basket_sub') + '</p>';
-  if (!P.basket.length) html += '<p class="none">' + t('p_basket_empty') + '</p><div class="btns" style="margin:0 0 8px"><button class="btn" id="fromcomm">' + t('p_from_comm') + '</button></div>';
-  else html += '<div class="bl">' + P.basket.map(function (it) {
-    return '<span class="chip">' + esc(label(it)) + (it.excl && it.excl.length ? ' <span class="n">−' + esc(it.excl.slice(0, 2).join(', −')) + (it.excl.length > 2 ? '…' : '') + '</span>' : '') +
-      '<button data-brm="' + esc(it.id) + '" aria-label="×">×</button></span>';
-  }).join('') + '</div>';
-  html += '<form class="addw" id="bform"><input class="inp" id="binp" autocomplete="off" placeholder="' + esc(t('p_add_ph')) + '"><button class="btn pri" type="submit">' + t('p_add') + '</button></form>' +
-    '<p class="small">' + t('p_tip') + '</p>';
-  if (sugg.length) html += '<p class="small" style="margin-bottom:4px">' + t('p_suggest') + '</p><div class="chips wrapc">' +
-    sugg.map(function (it) { return '<button class="chip" data-badd="' + esc(it.id) + '">+ ' + esc(label(it)) + '</button>'; }).join('') + '</div>';
-  html += '<h3>' + t('p_fav') + '</h3><p class="sub">' + t('p_fav_sub') + '</p><div class="chips wrapc">' + chipsHTML(cats, 'data-pfav', P.fav) + '</div>' +
-    '<h3>' + t('p_hide') + '</h3><p class="sub">' + t('p_hide_sub') + '</p><div class="chips wrapc">' + chipsHTML(cats, 'data-phide', P.hide, 'neg') + '</div>' +
-    '<h3>' + t('p_theme') + '</h3><div class="seg" style="display:inline-flex">' +
-      ['auto', 'light', 'dark'].map(function (k) { return '<button data-ptheme="' + k + '" aria-pressed="' + (P.theme === k) + '">' + t('th_' + k) + '</button>'; }).join('') + '</div>' +
-    '<h3>' + t('p_sort') + '</h3><select class="sel" id="psort">' +
-      ['auto', 'disc', 'kg', 'price', 'az'].map(function (k) { return '<option value="' + k + '"' + (P.sort === k ? ' selected' : '') + '>' + t('s_' + k) + '</option>'; }).join('') + '</select>' +
-    '</div>';
+    resultados = analisar(lista, pool, agora)
+    if args.csv:
+        arq_csv = saida.with_suffix(".csv")
+        with arq_csv.open("w", newline="", encoding="utf-8-sig") as f:
+            w = csv.writer(f, delimiter=";")
+            w.writerow(["item", "semaine", "magasin", "produit", "prix", "prix_kg", "rabais_%",
+                        "debut", "fin", "note"])
+            for r in resultados:
+                for per in ("atual", "proxima"):
+                    for o in r[per]:
+                        w.writerow([r["item"].fr, "actuelle" if per == "atual" else "prochaine",
+                                    o.loja, o.nome, o.preco_txt(),
+                                    f"{o.preco_kg:.2f}".replace(".", ",") if o.preco_kg else "",
+                                    round(o.desconto * 100) if o.desconto else "",
+                                    o.inicio.date() if o.inicio else "",
+                                    o.fim.date() if o.fim else "", o.obs()])
 
-  var inst;
-  if (isStandalone()) inst = '<p><span class="pill ok">' + t('inst_done') + '</span></p>';
-  else if (deferredPrompt) inst = '<div class="btns"><button class="btn pri" id="inst">' + t('inst_btn') + '</button></div>';
-  else inst = '<p>' + (isIOS() ? t('inst_ios') : t('inst_other')) + '</p>';
-  html += '<div class="panel"><h2>' + t('p_install') + '</h2>' + inst + '<p class="small">' + t('inst_why') + '</p></div>';
+    por_loja = Counter(o.loja for o in pool)
+    print(f"\n{len(pool)} ofertas de {n_folhetos} folhetos: "
+          + ", ".join(f"{l} {por_loja.get(l, 0)}" for l in LOJAS))
+    for nome_per, per in (("ESTA SEMANA", "atual"), ("PRÓXIMA SEMANA", "proxima")):
+        rot = roteiro(resultados, per)
+        if rot:
+            print(f"\nCESTA BÁSICA — {nome_per}")
+            for loja, itens in rot.items():
+                print(f"  {loja:<8} {len(itens):>2} {'item ' if len(itens) == 1 else 'itens'}: "
+                      + ", ".join(it.pt for it, _ in itens))
+    dicas = [r for r in resultados if r["dica"]]
+    if dicas:
+        print("\nQUANDO COMPRAR")
+        for r in dicas:
+            print(f"  {r['item'].pt}: {r['dica']}")
+    if falhas:
+        print(f"\nAtenção: {len(falhas)} buscas falharam: {', '.join(falhas[:10])}")
+    print(f"\nApp gerado: {saida}")
+    if not args.nao_abrir:
+        try:
+            webbrowser.open(saida.resolve().as_uri())
+        except Exception:
+            pass
+    return 0
 
-  var hw = histWeeks();
-  html += '<div class="panel"><h2>' + t('p_backup') + '</h2><p class="sub">' + t('p_backup_sub') + '</p>' +
-    '<div class="btns"><button class="btn pri" id="xlink">🔗 ' + t('x_link') + '</button><button class="btn" id="xexport">⬇ ' + t('x_export') + '</button><button class="btn" id="ximport">⬆ ' + t('x_import') + '</button></div>' +
-    '<h3>' + t('p_data') + '</h3><p class="small">' + (S.persisted ? t('st_p') : t('st_np')) + '<br>' + (hw > 1 ? t('hist_n', { n: hw }) : t('hist_0')) + '</p>' +
-    '<div class="btns"><button class="btn danger" id="xreset">' + (S.confirmReset ? t('l_confirm') : t('x_reset')) + '</button></div></div>';
-  $('#p-prof').innerHTML = html;
-}
 
-/* ======================= exportar / importar ======================= */
-function payload() {
-  var s = {};
-  Object.keys(saved).forEach(function (id) { s[id] = saved[id]; });
-  var p = clone(P); delete p.onboarded; delete p.dismissed;
-  return { app: 'aubaines-valbelair', v: 1, p: p, s: s, c: checked };
-}
-function doImport(obj) {
-  if (!obj || obj.app !== 'aubaines-valbelair' || !obj.p) { toast(t('bad_file')); return false; }
-  P = fixProfile(Object.assign(clone(P), obj.p));
-  P.onboarded = true;
-  S.lang = P.lang; S.sort = P.sort;
-  Object.keys(obj.s || {}).forEach(function (id) { saved[id] = obj.s[id]; });
-  Object.keys(obj.c || {}).forEach(function (id) { if (saved[id]) checked[id] = 1; });
-  DB.set('profile', P); saveList(); applyTheme();
-  toast(t('imported'));
-  return true;
-}
-function readImportHash() {
-  var h = location.hash || '';
-  if (h.indexOf('#importer=') !== 0) return;
-  try { S.pendingImport = JSON.parse(b64d(h.slice(10))); } catch (e) { S.pendingImport = null; }
-}
-function clearHash() { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; } }
-function download(name, text) {
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
-  a.download = name; document.body.appendChild(a); a.click();
-  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-}
-function mailto(subject, body) { return 'mailto:' + CONTATO.join('@') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); }
-function reportOffer(o) {
-  location.href = mailto('[Aubaines] ' + t('rep_subj') + ' — ' + o.s + ' — ' + o.n, [
-    t('rep_intro'), '',
-    'Magasin / Loja : ' + o.s,
-    'Produit / Produto : ' + o.n + (o.b ? ' (' + o.b + ')' : ''),
-    'Prix affiché / Preço : ' + priceText(o) + (o.kg != null ? ' (' + kgText(o) + ')' : ''),
-    'Validité / Validade : ' + o.f + ' → ' + o.e,
-    'Réf. : ' + o.i, 'Page : ' + location.href.split('#')[0], '',
-    t('rep_what'), ''
-  ].join('\n'));
-}
-
-/* ======================= geral ======================= */
-function toast(msg) { var el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove('on'); }, 1800); }
-function copy(text, msg) {
-  var ok = function () { toast(msg || t('l_copied')); };
-  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(ok, function () { fallbackCopy(text, ok); });
-  fallbackCopy(text, ok);
-}
-function fallbackCopy(text, ok) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); }
-function renderCurrent() {
-  if (S.tab === 'deals') renderDeals(); else if (S.tab === 'where') renderWhere(); else if (S.tab === 'list') renderList(); else renderProfile();
-}
-function renderPanel() { renderHero(); renderTabs(); renderCurrent(); }
-function renderAll() { applyTheme(); renderStatic(); renderPanel(); }
-function goTab(tab, anchor) {
-  S.tab = tab; S.confirmClear = false; S.confirmReset = false;
-  renderPanel();
-  var el = anchor && document.getElementById(anchor);
-  if (el) el.scrollIntoView({ block: 'start' });
-  else window.scrollTo({ top: Math.min(window.scrollY, $('.tabs').offsetTop - 60) });
-}
-function toggleIn(arr, v) { var i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); }
-
-document.addEventListener('click', function (ev) {
-  var el = ev.target.closest('button, a#bugmail');
-  if (!el) return;
-  var v;
-  if ((v = el.getAttribute('data-lang'))) { S.lang = v; LS.set('zc_lang', v); saveProfile(true); renderAll(); return; }
-  if ((v = el.getAttribute('data-week')) && !el.disabled) { S.week = v; S.limit = 48; renderPanel(); return; }
-  if ((v = el.getAttribute('data-tab'))) { goTab(v); return; }
-  if ((v = el.getAttribute('data-go'))) { goTab(v, el.getAttribute('data-anchor')); return; }
-  if (el.hasAttribute('data-store')) { v = el.getAttribute('data-store'); if (!v) S.stores = {}; else if (S.stores[v]) delete S.stores[v]; else S.stores[v] = 1; S.limit = 48; renderDeals(); return; }
-  if (el.hasAttribute('data-cat')) { S.cat = el.getAttribute('data-cat'); S.limit = 48; renderDeals(); return; }
-  if ((v = el.getAttribute('data-add'))) {
-    ev.preventDefault(); toggleSave(v); renderTabs();
-    if (S.tab === 'list') renderList();
-    else $$('[data-add="' + (window.CSS && CSS.escape ? CSS.escape(v) : v) + '"]').forEach(function (b) { var on = !!saved[v]; b.setAttribute('aria-pressed', on); b.textContent = addBtnText(on); });
-    return;
-  }
-  if ((v = el.getAttribute('data-report'))) { if (BYID[v]) reportOffer(BYID[v]); return; }
-  if ((v = el.getAttribute('data-pstore'))) { toggleIn(P.stores, v); S.stores = {}; saveProfile(); renderPanel(); return; }
-  if ((v = el.getAttribute('data-pfav'))) { toggleIn(P.fav, v); var hi = P.hide.indexOf(v); if (hi >= 0) P.hide.splice(hi, 1); saveProfile(); renderProfile(); return; }
-  if ((v = el.getAttribute('data-phide'))) { toggleIn(P.hide, v); var fi = P.fav.indexOf(v); if (fi >= 0) P.fav.splice(fi, 1); saveProfile(); renderProfile(); return; }
-  if ((v = el.getAttribute('data-ptheme'))) { P.theme = v; applyTheme(); saveProfile(); renderProfile(); return; }
-  if ((v = el.getAttribute('data-badd'))) {
-    var src = COMMUNITY.filter(function (x) { return x.id === v; })[0];
-    if (src) { P.basket.push(clone(src)); P.onboarded = true; saveProfile(); renderPanel(); }
-    return;
-  }
-  if ((v = el.getAttribute('data-brm'))) { P.basket = P.basket.filter(function (x) { return x.id !== v; }); saveProfile(); renderPanel(); return; }
-  switch (el.id) {
-    case 'more': S.limit += 48; renderDeals(); return;
-    case 'qx': S.q = ''; $('#q').value = ''; S.limit = 48; renderDeals(); $('#q').focus(); return;
-    case 'copy': copy(shareText()); return;
-    case 'share':
-      var txt = shareText();
-      if (navigator.share) navigator.share({ title: t('share_title'), text: txt }).catch(function () {}); else copy(txt);
-      return;
-    case 'clear':
-      if (!S.confirmClear) { S.confirmClear = true; renderList(); return; }
-      saved = {}; checked = {}; S.confirmClear = false; saveList(); renderTabs(); renderList(); return;
-    case 'addbest':
-      var n = 0;
-      basket(S.week).forEach(function (r) { if (r.best && !saved[r.best.i]) { toggleSave(r.best.i, true); n++; } });
-      toast(t('w_added', { n: n })); renderTabs(); renderWhere(); return;
-    case 'ob-later': P.dismissed = true; saveProfile(true); renderHero(); return;
-    case 'imp-yes': doImport(S.pendingImport); S.pendingImport = null; clearHash(); renderAll(); return;
-    case 'imp-no': S.pendingImport = null; clearHash(); renderHero(); return;
-    case 'fromcomm': P.basket = clone(COMMUNITY); P.onboarded = true; saveProfile(); renderPanel(); return;
-    case 'inst':
-      if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; renderProfile(); }); }
-      return;
-    case 'xlink':
-      var url = location.href.split('#')[0].split('?')[0] + '#importer=' + b64e(JSON.stringify(payload()));
-      if (navigator.share) navigator.share({ title: 'Aubaines Val-Bélair', url: url }).catch(function () { copy(url, t('x_linkcopied')); });
-      else copy(url, t('x_linkcopied'));
-      return;
-    case 'xexport': download('aubaines-profil-' + TODAY + '.json', JSON.stringify(payload(), null, 1)); return;
-    case 'ximport': $('#impfile').click(); return;
-    case 'xreset':
-      if (!S.confirmReset) { S.confirmReset = true; renderProfile(); return; }
-      DB.wipe().then(function () { P = fixProfile(null); saved = {}; checked = {}; HIST = {}; S.confirmReset = false; S.sort = 'auto'; renderAll(); });
-      return;
-  }
-});
-document.addEventListener('change', function (ev) {
-  var el = ev.target, id = el.getAttribute && el.getAttribute('data-check');
-  if (id) { if (el.checked) checked[id] = 1; else delete checked[id]; saveList(); el.closest('.li').classList.toggle('done', el.checked); return; }
-  if (el.id === 'sort') { S.sort = el.value; renderDeals(); return; }
-  if (el.id === 'onlydisc') { S.disc = el.checked; S.limit = 48; renderDeals(); return; }
-  if (el.id === 'psort') { P.sort = el.value; S.sort = el.value; saveProfile(); return; }
-  if (el.id === 'impfile' && el.files && el.files[0]) {
-    var fr = new FileReader();
-    fr.onload = function () { try { if (doImport(JSON.parse(fr.result))) renderAll(); } catch (e) { toast(t('bad_file')); } el.value = ''; };
-    fr.readAsText(el.files[0]);
-  }
-});
-document.addEventListener('input', function (ev) {
-  if (ev.target.id === 'pname') { P.name = ev.target.value.trim().slice(0, 30); P.onboarded = true; saveProfile(); renderHero(); }
-});
-document.addEventListener('submit', function (ev) {
-  if (ev.target.id !== 'bform') return;
-  ev.preventDefault();
-  var it = customItem($('#binp').value);
-  if (it) { P.basket.push(it); P.onboarded = true; saveProfile(); renderPanel(); var b = $('#binp'); if (b) b.focus(); }
-});
-var deb;
-$('#q').addEventListener('input', function (ev) { clearTimeout(deb); deb = setTimeout(function () { S.q = ev.target.value; S.limit = 48; renderDeals(); }, 120); });
-
-/* ======================= início ======================= */
-readImportHash();
-migrateOld();
-$('#q').value = S.q;
-renderAll();
-// carrega do IndexedDB (fonte principal) e redesenha se for diferente do espelho
-Promise.all([DB.get('profile'), DB.get('saved'), DB.get('checked')]).then(function (r) {
-  var changed = false;
-  if (r[0] && JSON.stringify(r[0]) !== JSON.stringify(P)) { P = fixProfile(r[0]); S.lang = params.get('lang') || P.lang; S.sort = P.sort; changed = true; }
-  if (r[1] && JSON.stringify(r[1]) !== JSON.stringify(saved)) { saved = r[1]; changed = true; }
-  if (r[2] && JSON.stringify(r[2]) !== JSON.stringify(checked)) { checked = r[2]; changed = true; }
-  if (changed) renderAll();
-  if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then(function (x) { S.persisted = !!x; }).catch(function () {});
-  recordHistory();
-});
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
-}
-})();
-</script>
-</body>
-</html>
+if __name__ == "__main__":
+    sys.exit(main())
