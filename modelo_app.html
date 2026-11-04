@@ -4,22 +4,46 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Aubaines Val-Bélair — par ZeloClass</title>
-<meta name="description" content="Les circulaires de Maxi, Metro, IGA et Super C comparées chaque jour pour Val-Bélair : recherche, filtres et liste d'épicerie.">
+<meta name="description" content="Les circulaires de Maxi, Metro, IGA et Super C comparées chaque jour pour Val-Bélair : recherche, filtres, panier personnel et liste d'épicerie.">
 <meta name="theme-color" content="#4f46e5">
 <meta property="og:title" content="Aubaines Val-Bélair">
 <meta property="og:description" content="Maxi, Metro, IGA et Super C comparés chaque jour. Trouvez le meilleur prix et faites votre liste.">
 <meta property="og:type" content="website">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%234f46e5'/%3E%3Ctext x='32' y='44' font-family='Arial' font-weight='700' font-size='34' text-anchor='middle' fill='white'%3E%25%3C/text%3E%3C/svg%3E">
+<meta property="og:url" content="__URL_SITE__">
+<meta property="og:image" content="__URL_SITE__icon-512.png">
+<meta name="twitter:card" content="summary">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aubaines">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
 :root{
   --brand:#4f46e5;--brand-d:#4338ca;--brand-dd:#3730a3;--brand-l:#eef2ff;--brand-m:#e0e7ff;
-  --ink:#0f172a;--ink2:#334155;--mut:#64748b;--line:#e5e7eb;--bg:#f6f7fb;--card:#fff;
-  --ok:#15803d;--okbg:#f0fdf4;--warn:#92400e;--warnbg:#fffbeb;--deal:#e11d48;
-  --r:16px;--sh:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.06);
+  --ink:#0f172a;--ink2:#334155;--mut:#64748b;--line:#e5e7eb;--bg:#f6f7fb;--card:#fff;--soft:#f8fafc;--soft2:#fafafa;
+  --solid:#0f172a;--solidtx:#fff;--bar:rgba(255,255,255,.9);
+  --ok:#15803d;--okbg:#f0fdf4;--warn:#92400e;--warnbg:#fffbeb;--warnline:#fde68a;--deal:#e11d48;
+  --r:16px;--sh:0 1px 2px rgba(15,23,42,.05),0 6px 20px rgba(15,23,42,.06);color-scheme:light;
 }
+html[data-theme=dark]{
+  --brand-d:#a5b4fc;--brand-dd:#c7d2fe;--brand-l:#1e1b4b;--brand-m:#312e81;
+  --ink:#e5e7eb;--ink2:#cbd5e1;--mut:#94a3b8;--line:#243049;--bg:#0b1020;--card:#131a2e;--soft:#0f1527;--soft2:#172036;
+  --solid:#e5e7eb;--solidtx:#0b1020;--bar:rgba(11,16,32,.86);
+  --ok:#4ade80;--okbg:#052e16;--warn:#fcd34d;--warnbg:#2a1d06;--warnline:#78350f;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);color-scheme:dark;
+}
+@media (prefers-color-scheme:dark){html[data-theme=auto]{
+  --brand-d:#a5b4fc;--brand-dd:#c7d2fe;--brand-l:#1e1b4b;--brand-m:#312e81;
+  --ink:#e5e7eb;--ink2:#cbd5e1;--mut:#94a3b8;--line:#243049;--bg:#0b1020;--card:#131a2e;--soft:#0f1527;--soft2:#172036;
+  --solid:#e5e7eb;--solidtx:#0b1020;--bar:rgba(11,16,32,.86);
+  --ok:#4ade80;--okbg:#052e16;--warn:#fcd34d;--warnbg:#2a1d06;--warnline:#78350f;
+  --sh:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);color-scheme:dark;
+}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%;scroll-padding-top:120px}
 body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:15px;line-height:1.45}
@@ -28,22 +52,18 @@ button{-webkit-tap-highlight-color:transparent}
 a{color:var(--brand-d)}
 .wrap{max-width:1180px;margin:0 auto;padding:0 16px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-
-/* barra superior */
-.bar{position:sticky;top:0;z-index:30;background:rgba(255,255,255,.9);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.bar{position:sticky;top:0;z-index:30;background:var(--bar);backdrop-filter:saturate(1.4) blur(10px);-webkit-backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
 .bar .wrap{display:flex;align-items:center;justify-content:space-between;height:60px;gap:12px}
-.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0}
-.mark{flex:none;width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,var(--brand),#7c3aed);display:grid;place-items:center;color:#fff;font-weight:800;font-size:18px;box-shadow:0 4px 12px rgba(79,70,229,.35)}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.mark{flex:none;width:36px;height:36px;border-radius:11px;background:url(icon-192.png) center/cover,linear-gradient(135deg,var(--brand),#7c3aed);display:grid;place-items:center;color:transparent;font-weight:800;font-size:18px;box-shadow:0 4px 12px rgba(79,70,229,.35)}
 .brand b{display:block;font-size:16px;letter-spacing:-.01em;white-space:nowrap}
 .brand small{display:block;font-size:12px;color:var(--mut);white-space:nowrap}
 .brand small a{color:var(--brand);font-weight:700;text-decoration:none}
 .seg{display:flex;background:var(--brand-l);border-radius:999px;padding:3px;flex:none}
 .seg button{border:0;background:transparent;padding:5px 12px;border-radius:999px;font-weight:700;font-size:13px;color:var(--brand-d);cursor:pointer}
-.seg button[aria-pressed=true]{background:#fff;box-shadow:0 1px 3px rgba(15,23,42,.12)}
-
-/* hero */
+.seg button[aria-pressed=true]{background:var(--brand);color:#fff;box-shadow:0 1px 3px rgba(15,23,42,.18)}
 .hero{margin:18px 0 6px;border-radius:24px;padding:26px 24px 22px;color:#fff;position:relative;overflow:hidden;
-  background:radial-gradient(900px 260px at 100% 0,rgba(167,139,250,.55),transparent 60%),linear-gradient(135deg,var(--brand-dd),var(--brand) 55%,#6366f1)}
+  background:radial-gradient(900px 260px at 100% 0,rgba(167,139,250,.55),transparent 60%),linear-gradient(135deg,#3730a3,#4f46e5 55%,#6366f1)}
 .hero::after{content:"";position:absolute;right:-60px;bottom:-80px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.07)}
 .hero h1{margin:0 0 6px;font-size:clamp(22px,4vw,34px);line-height:1.12;letter-spacing:-.025em;font-weight:800;max-width:760px}
 .hero p{margin:0;opacity:.92;max-width:640px}
@@ -51,53 +71,55 @@ a{color:var(--brand-d)}
 .weeks button{border:0;background:transparent;color:#fff;padding:8px 14px;border-radius:10px;cursor:pointer;text-align:left;line-height:1.25}
 .weeks button b{display:block;font-size:14px}
 .weeks button small{opacity:.85;font-size:12px}
-.weeks button[aria-pressed=true]{background:#fff;color:var(--brand-d)}
+.weeks button[aria-pressed=true]{background:#fff;color:#4338ca}
 .weeks button[disabled]{opacity:.55;cursor:default}
 .stats{display:flex;gap:22px;flex-wrap:wrap;margin-top:16px;font-size:13px;opacity:.95;position:relative;z-index:1}
 .stats b{font-size:20px;display:block;letter-spacing:-.02em}
-
-.banner{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--warnbg);color:var(--warn);border:1px solid #fde68a;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-weight:500}
-.banner button{border:0;background:var(--warn);color:#fff;border-radius:10px;padding:7px 12px;font-weight:600;cursor:pointer}
-
-/* abas */
+.banner{margin:12px 0 0;padding:12px 14px;border-radius:14px;background:var(--warnbg);color:var(--warn);border:1px solid var(--warnline);display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;font-weight:500}
+.banner .bb{display:flex;gap:8px;flex-wrap:wrap}
+.banner button{border:0;background:var(--warn);color:var(--warnbg);border-radius:10px;padding:7px 12px;font-weight:700;cursor:pointer}
+.banner button.ghost{background:transparent;color:var(--warn);border:1px solid var(--warnline)}
+.banner.brandb{background:var(--brand-l);color:var(--brand-dd);border-color:var(--brand-m)}
+.banner.brandb button{background:var(--brand);color:#fff}
+.banner.brandb button.ghost{background:transparent;color:var(--brand-dd);border-color:var(--brand-m)}
 .tabs{position:sticky;top:60px;z-index:20;background:var(--bg);display:flex;gap:6px;padding:12px 0 10px;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tabs button{border:1px solid var(--line);background:#fff;padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--ink2)}
-.tabs button[aria-selected=true]{background:var(--ink);border-color:var(--ink);color:#fff}
+.tabs button{border:1px solid var(--line);background:var(--card);padding:9px 16px;border-radius:999px;font-weight:600;cursor:pointer;white-space:nowrap;color:var(--ink2)}
+.tabs button[aria-selected=true]{background:var(--solid);border-color:var(--solid);color:var(--solidtx)}
 .count{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:999px;background:var(--brand);color:#fff;font-size:12px;line-height:20px;text-align:center}
-.tabs button[aria-selected=true] .count{background:#fff;color:var(--ink)}
-
-/* filtros */
-.filters{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--sh);display:grid;gap:10px}
+.tabs button[aria-selected=true] .count{background:var(--solidtx);color:var(--solid)}
+.filters{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px;box-shadow:var(--sh);display:grid;gap:10px}
 .search{position:relative}
-.search input{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 40px 12px 42px;font-size:16px;background:#f8fafc;outline:none;-webkit-appearance:none}
-.search input:focus{border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px var(--brand-m)}
+.search input{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px 40px 12px 42px;font-size:16px;background:var(--soft);outline:none;-webkit-appearance:none}
+.search input:focus{border-color:var(--brand);background:var(--card);box-shadow:0 0 0 4px var(--brand-m)}
 .search svg{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--mut);pointer-events:none}
 input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display:none}
 .search .x{position:absolute;right:6px;top:50%;transform:translateY(-50%);border:0;background:transparent;font-size:22px;line-height:1;color:var(--mut);cursor:pointer;padding:6px 8px;display:none}
 .chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.chips.wrapc{flex-wrap:wrap;overflow:visible}
 .chips::-webkit-scrollbar{display:none}
-.chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.chip{border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .chip[aria-pressed=true]{background:var(--brand-l);border-color:var(--brand);color:var(--brand-dd)}
+.chip.neg[aria-pressed=true]{background:var(--soft2);border-color:var(--mut);color:var(--mut);text-decoration:line-through}
 .chip .dot{width:9px;height:9px;border-radius:50%}
 .chip .n{color:var(--mut);font-size:12px}
 .row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
-.sel{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:#fff;cursor:pointer}
+.sel{border:1px solid var(--line);border-radius:10px;padding:7px 10px;background:var(--card);cursor:pointer}
 .switch{display:inline-flex;align-items:center;gap:8px;font-size:14px;cursor:pointer;user-select:none}
 .switch input{width:18px;height:18px;accent-color:var(--brand);cursor:pointer}
 .metaline{color:var(--mut);font-size:13px;margin:14px 2px 10px}
-
-/* cartões */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.card{background:#fff;border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh);transition:transform .12s ease,box-shadow .12s ease}
-.card:hover{transform:translateY(-2px);box-shadow:0 2px 4px rgba(15,23,42,.06),0 12px 28px rgba(15,23,42,.08)}
-.ph{position:relative;aspect-ratio:4/3;background:#fff;display:grid;place-items:center;border-bottom:1px solid #f1f5f9}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh);transition:transform .12s ease,box-shadow .12s ease}
+.card:hover{transform:translateY(-2px)}
+.ph{position:relative;aspect-ratio:4/3;background:#fff;display:grid;place-items:center;border-bottom:1px solid var(--line)}
 .ph img{width:100%;height:100%;object-fit:contain;padding:10px}
 .emo{font-size:46px}
-.disc{position:absolute;top:10px;left:10px;background:var(--deal);color:#fff;font-weight:800;font-size:13px;padding:3px 8px;border-radius:8px;letter-spacing:-.01em}
+.disc{position:absolute;top:10px;left:10px;background:var(--deal);color:#fff;font-weight:800;font-size:13px;padding:3px 8px;border-radius:8px}
+.low{position:absolute;bottom:8px;left:8px;background:#065f46;color:#ecfdf5;font-weight:700;font-size:11.5px;padding:2px 7px;border-radius:7px}
 .store{display:inline-block;color:#fff;font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--c,#475569);white-space:nowrap}
 .body{padding:12px;display:flex;flex-direction:column;gap:4px;flex:1}
 .body h3{font-size:14.5px;font-weight:600;margin:4px 0 0;line-height:1.3}
+.lbl{font-size:12px;font-weight:700;color:var(--brand-d);text-transform:uppercase;letter-spacing:.04em}
 .bn{font-size:12.5px;color:var(--mut)}
 .price{font-size:23px;font-weight:800;letter-spacing:-.02em;margin-top:auto;padding-top:6px;line-height:1.1}
 .price small{font-size:13px;font-weight:600;color:var(--mut);letter-spacing:0}
@@ -106,17 +128,28 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display
 .kg{font-size:12.5px;color:var(--ink2)}
 .note{font-size:12px;color:var(--warn);background:var(--warnbg);padding:3px 7px;border-radius:7px;align-self:flex-start;margin-top:2px}
 .dates{font-size:12px;color:var(--mut)}
-.add{margin-top:8px;border:1px solid var(--brand);color:var(--brand-d);background:#fff;border-radius:10px;padding:8px;font-weight:600;cursor:pointer}
+.acts{display:flex;gap:6px;margin-top:8px;align-items:stretch}
+.add{flex:1;border:1px solid var(--brand);color:var(--brand-d);background:var(--card);border-radius:10px;padding:8px;font-weight:600;cursor:pointer}
 .add:hover{background:var(--brand-l)}
 .add[aria-pressed=true]{background:var(--brand);color:#fff}
-.more{display:block;margin:18px auto 4px;border:0;background:var(--ink);color:#fff;border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer}
-.empty{text-align:center;color:var(--mut);padding:36px 12px}
+.rep{border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;padding:0 10px;cursor:pointer;font-size:14px}
+.rep:hover{color:var(--deal);border-color:var(--deal)}
+.more{display:block;margin:18px auto 4px;border:0;background:var(--solid);color:var(--solidtx);border-radius:12px;padding:12px 22px;font-weight:600;cursor:pointer}
+.empty{text-align:center;color:var(--mut);padding:30px 12px}
 .empty .emo{display:block;margin-bottom:6px}
-
-/* painéis */
-.panel{background:#fff;border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin:0 0 12px}
+.fy{margin:0 0 14px}
+.fy h2{font-size:18px;margin:4px 2px 8px;letter-spacing:-.01em}
+.fyrow{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(178px,200px);gap:10px;overflow-x:auto;padding:2px 2px 8px;scroll-snap-type:x mandatory}
+.fyrow .card{scroll-snap-align:start}
+.fyrow .ph{aspect-ratio:16/11}
+.fyrow .price{font-size:20px}
+.cta{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--card);border:1px dashed var(--brand);border-radius:var(--r);padding:14px 16px;margin:0 0 14px}
+.cta b{display:block}
+.cta span{color:var(--mut);font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:18px;box-shadow:var(--sh);margin:0 0 12px}
 .panel h2{margin:0 0 4px;font-size:20px;letter-spacing:-.015em}
-.sub{color:var(--mut);font-size:14px;margin:0 0 14px}
+.panel h3{margin:18px 0 4px;font-size:16px}
+.sub{color:var(--mut);font-size:14px;margin:0 0 12px}
 .rank{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
 .rk{border:1px solid var(--line);border-radius:14px;padding:14px}
 .rk.first{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-m)}
@@ -127,17 +160,19 @@ input[type=search]::-webkit-search-cancel-button{-webkit-appearance:none;display
 .rk ul{margin:0;padding-left:18px;font-size:14px}
 .rk li{margin:2px 0}
 .pill{display:inline-block;background:var(--brand-l);color:var(--brand-dd);border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+.pill.ok{background:var(--okbg);color:var(--ok)}
 .reco{background:var(--brand-l);border-radius:12px;padding:12px 14px;margin:0 0 14px;color:var(--brand-dd);font-weight:500}
 .reco b{color:var(--ink)}
 .tips{margin:0;padding:0;list-style:none}
 .tips li{padding:9px 12px;border-radius:10px;background:var(--warnbg);color:var(--warn);margin:6px 0;font-size:14px}
-.tips li b{color:#78350f}
 .sec{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);margin:18px 0 2px;font-weight:700}
 .bi{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:12px 0;border-top:1px solid var(--line);align-items:start}
 .bi h4{margin:0;font-size:15px}
 .bi .what{font-size:13px;color:var(--ink2);margin-top:2px}
 .bi .pr{text-align:right;font-weight:800;font-size:17px;white-space:nowrap}
 .bi .pr small{display:block;font-size:12px;font-weight:500;color:var(--mut)}
+.bi .pr .mini{margin-top:6px;border:1px solid var(--brand);background:var(--card);color:var(--brand-d);border-radius:8px;padding:3px 8px;font-size:12.5px;font-weight:600;cursor:pointer}
+.bi .pr .mini[aria-pressed=true]{background:var(--brand);color:#fff}
 .bi details{grid-column:1/-1}
 details summary{cursor:pointer;color:var(--brand-d);font-size:13px;font-weight:600;list-style:none}
 details summary::-webkit-details-marker{display:none}
@@ -147,12 +182,10 @@ details[open] summary::before{content:"▾ "}
 .ol li{display:flex;justify-content:space-between;gap:10px;font-size:13.5px;padding:5px 0;border-bottom:1px dashed var(--line)}
 .ol li span:last-child{white-space:nowrap;font-weight:600}
 .none{color:var(--mut);font-style:italic;font-size:14px}
-
-/* minha lista */
 .lg{border:1px solid var(--line);border-radius:14px;margin:10px 0;overflow:hidden}
-.lg header{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:#fafafa;border-bottom:1px solid var(--line)}
-.lg header small{color:var(--mut)}
-.li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid #f1f5f9}
+.lg header{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 12px;background:var(--soft2);border-bottom:1px solid var(--line)}
+.lg header small{color:var(--mut);text-align:right}
+.li{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-top:1px solid var(--line)}
 .li:first-of-type{border-top:0}
 .li input{width:20px;height:20px;margin-top:2px;accent-color:var(--brand);flex:none}
 .li .t{flex:1;min-width:0}
@@ -163,39 +196,51 @@ details[open] summary::before{content:"▾ "}
 .li.exp{opacity:.55}
 .rm{border:0;background:transparent;color:var(--mut);font-size:18px;cursor:pointer;padding:0 4px}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer}
+.btn{border:1px solid var(--line);background:var(--card);border-radius:10px;padding:9px 14px;font-weight:600;cursor:pointer;text-decoration:none;color:var(--ink);display:inline-block}
 .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff}
 .btn.danger{color:var(--deal)}
+.inp{flex:1;min-width:0;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:10px 12px;font-size:16px;outline:none;width:100%}
+.inp:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-m)}
 .addw{display:flex;gap:8px}
-.addw input{flex:1;min-width:0;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:16px;outline:none}
-.addw input:focus{border-color:var(--brand);box-shadow:0 0 0 4px var(--brand-m)}
-.wt{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}
-.wt .h{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
-.wt .h b{font-size:15px}
-
-footer{margin-top:28px;border-top:1px solid var(--line);background:#fff}
+.bl{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.bl .chip{cursor:default}
+.bl .chip button{border:0;background:transparent;color:var(--mut);cursor:pointer;font-size:16px;line-height:1;padding:0 0 0 2px}
+.pgrid{display:grid;gap:4px}
+.small{font-size:13px;color:var(--mut)}
+footer{margin-top:28px;border-top:1px solid var(--line);background:var(--card)}
 footer .wrap{padding:24px 16px 40px;display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));font-size:13.5px;color:var(--ink2)}
 footer h5{margin:0 0 6px;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}
 footer p{margin:0 0 6px}
 footer ul{margin:0;padding:0;list-style:none}
 footer li{margin:4px 0}
-.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:50}
+.hshare{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-weight:700;font-size:13px;cursor:pointer;color:var(--ink)}
+.hright{display:flex;align-items:center;gap:8px}
+.region{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:999px;padding:4px 11px;font-size:12.5px;font-weight:600;margin-bottom:10px;position:relative;z-index:1;border:0;color:#fff;cursor:pointer}
+.shbox{position:fixed;inset:0;z-index:60;background:rgba(15,23,42,.45);display:flex;align-items:flex-end;justify-content:center;padding:16px}
+.shbox[hidden]{display:none}
+.shcard{background:var(--card);color:var(--ink);border-radius:20px;padding:18px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.shcard h3{margin:0 0 4px;font-size:17px}
+.shcard p{margin:0 0 12px;color:var(--mut);font-size:13.5px;white-space:pre-line}
+.shgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.shgrid a,.shgrid button{display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--soft);color:var(--ink);border-radius:12px;padding:11px;font-weight:600;cursor:pointer;text-decoration:none;font-size:14px}
+.shclose{margin-top:10px;width:100%;border:0;background:transparent;color:var(--mut);padding:8px;cursor:pointer;font-weight:600}
+@media (min-width:700px){.shbox{align-items:center}}
+@media (max-width:600px){.hshare span{display:none}.hshare{padding:7px 10px}.region .rl{display:none}}
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);background:var(--solid);color:var(--solidtx);padding:10px 16px;border-radius:12px;font-weight:600;opacity:0;pointer-events:none;transition:.2s;z-index:50}
 .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
 @media (max-width:600px){
   .hero{padding:20px 18px 18px;border-radius:20px;margin-top:12px}
+  .hero h1{font-size:21px}
+  .hero p{font-size:13.5px}
+  .weeks{display:flex;margin-top:12px}
+  .weeks button{flex:1;padding:7px 10px}
+  .stats{gap:18px;margin-top:12px}
+  .stats b{font-size:17px}
+  .banner{padding:10px 12px;font-size:14px}
   .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
   .body{padding:10px}
   .price{font-size:19px}
   .brand b{font-size:15px}
-  .hero h1{font-size:21px}
-  .hero p{font-size:13.5px}
-  .weeks{margin-top:12px}
-  .weeks button{padding:7px 10px}
-  .stats{gap:18px;margin-top:12px}
-  .stats b{font-size:17px}
-  .banner{padding:10px 12px;font-size:14px}
-  .weeks{display:flex}
-  .weeks button{flex:1}
   .panel{padding:14px}
 }
 </style>
@@ -203,18 +248,22 @@ footer li{margin:4px 0}
 <body>
 <header class="bar"><div class="wrap">
   <div class="brand">
-    <span class="mark">%</span>
+    <span class="mark" aria-hidden="true">%</span>
     <span><b data-t="product">Aubaines Val-Bélair</b><small><span data-t="by">par</span> <a href="https://zeloclass.com" target="_blank" rel="noopener">ZeloClass</a></small></span>
   </div>
-  <div class="seg" role="group" aria-label="Langue / Idioma">
-    <button data-lang="fr">FR</button><button data-lang="pt">PT</button>
+  <div class="hright">
+    <button class="hshare" id="shareapp" aria-label="Partager"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 3v12"/><path d="m7 8 5-5 5 5"/></svg><span data-t="share"></span></button>
+    <div class="seg" role="group" aria-label="Langue / Idioma">
+      <button data-lang="fr">FR</button><button data-lang="pt">PT</button>
+    </div>
   </div>
 </div></header>
 
 <div class="wrap">
   <section class="hero">
-    <h1 data-t="hero_title"></h1>
-    <p data-t="hero_sub"></p>
+    <button class="region" id="regionpill" data-go-region="1"></button>
+    <h1 id="h1"></h1>
+    <p id="hsub"></p>
     <div class="weeks" id="weeks" role="group"></div>
     <div class="stats" id="stats"></div>
   </section>
@@ -224,9 +273,11 @@ footer li{margin:4px 0}
     <button role="tab" data-tab="deals" data-t="tab_deals"></button>
     <button role="tab" data-tab="where" data-t="tab_where"></button>
     <button role="tab" data-tab="list"><span data-t="tab_list"></span><span class="count" id="listcount" hidden></span></button>
+    <button role="tab" data-tab="prof" data-t="tab_prof"></button>
   </nav>
 
   <section id="p-deals">
+    <div id="foryou"></div>
     <div class="filters">
       <div class="search">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -245,9 +296,9 @@ footer li{margin:4px 0}
     <div class="grid" id="grid"></div>
     <button class="more" id="more" hidden></button>
   </section>
-
   <section id="p-where" hidden></section>
   <section id="p-list" hidden></section>
+  <section id="p-prof" hidden></section>
 </div>
 
 <footer><div class="wrap">
@@ -256,10 +307,29 @@ footer li{margin:4px 0}
     <p data-t="about_txt"></p>
     <p><span data-t="made_by"></span> <a href="https://zeloclass.com" target="_blank" rel="noopener"><b>ZeloClass</b></a></p>
   </div>
-  <div><h5 data-t="stores_title"></h5><ul id="addr"></ul></div>
-  <div><h5 data-t="notice"></h5><p data-t="notice_txt"></p><p id="updated" class="dates"></p></div>
+  <div id="regiao"><h5 data-t="reg_title"></h5><p id="regtxt"></p><ul id="addr"></ul>
+    <p class="small" data-t="reg_other"></p><p><a class="btn" id="regmail" href="#" data-t="reg_btn"></a></p></div>
+  <div>
+    <h5 data-t="contact"></h5>
+    <p data-t="contact_txt"></p>
+    <p><a class="btn" id="bugmail" href="#" data-t="contact_btn"></a></p>
+    <p class="small" id="mailtxt"></p>
+    <p class="small" data-t="notice_txt"></p>
+    <p id="updated" class="small"></p>
+  </div>
 </div></footer>
+<div class="shbox" id="shbox" hidden><div class="shcard" role="dialog" aria-modal="true">
+  <h3 id="shtitle"></h3><p id="shtext"></p>
+  <div class="shgrid">
+    <a id="shwa" target="_blank" rel="noopener">💬 WhatsApp</a>
+    <a id="shfb" target="_blank" rel="noopener">📘 Facebook</a>
+    <a id="shmail">✉ <span data-t="sh_mail"></span></a>
+    <button id="shcopy">🔗 <span data-t="sh_copy"></span></button>
+  </div>
+  <button class="shclose" id="shclose" data-t="close"></button>
+</div></div>
 <div class="toast" id="toast" role="status"></div>
+<input type="file" id="impfile" accept="application/json,.json" hidden>
 
 <script>const D = /*__DADOS__*/null;</script>
 <script>
@@ -267,92 +337,157 @@ footer li{margin:4px 0}
 'use strict';
 if (!D || !D.ofertas) { document.body.innerHTML = '<p style="padding:40px;font-family:sans-serif">Données indisponibles. Exécutez promocoes.py.</p>'; return; }
 
-/* ---------------- textos ---------------- */
+var CONTATO = ['zelobusinessapp', 'gmail.com'];
+
+/* ======================= textos ======================= */
 var T = {
 fr: {
   product:'Aubaines Val-Bélair', by:'par',
   hero_title:'Les meilleures aubaines de la semaine, au même endroit',
   hero_sub:'Les circulaires de Maxi, Metro, IGA et Super C comparées pour vous chaque matin. Cherchez, filtrez et faites votre liste.',
+  hello:'Bonjour {n} 👋', hello_sub:'{k} produits de votre panier sont en rabais cette semaine dans vos magasins.', hello_sub1:'1 produit de votre panier est en rabais cette semaine dans vos magasins.', hello_sub0:'Voici les aubaines de vos magasins cette semaine.',
   week_cur:'Cette semaine', week_next:'Semaine prochaine', not_yet:'pas encore publiée',
   st_deals:'aubaines', st_disc:'en rabais', st_stores:'épiceries',
   banner_next:'La nouvelle circulaire commence demain.', see_next:'Voir la semaine prochaine',
-  tab_deals:'Aubaines', tab_where:'Où magasiner?', tab_list:'Ma liste',
+  ob_title:'Faites-en votre propre app.', ob_txt:'Choisissez vos magasins, votre panier et vos catégories. Tout reste sur votre appareil, sans inscription.', ob_go:'Personnaliser', ob_later:'Plus tard',
+  imp_banner:'On vous a partagé un profil (panier de {n} produits, liste de {m} produits).', imp_yes:'Importer', imp_no:'Ignorer',
+  tab_deals:'Aubaines', tab_where:'Où magasiner?', tab_list:'Ma liste', tab_prof:'⚙ Mon profil',
   search_ph:'Rechercher : poulet, fraises, café…',
   all:'Tout', only_disc:'Rabais seulement', sort:'Trier',
   s_auto:'Recommandé', s_disc:'Plus gros rabais', s_kg:'Meilleur prix au kg', s_price:'Prix le plus bas', s_az:'A → Z',
   results:'{n} produits', results1:'1 produit', more:'Voir plus ({n})',
   nothing:'Aucun produit trouvé. Essayez un autre mot ou retirez des filtres.',
-  add:'Ajouter', added:'Dans ma liste', each:'ch.', see_flyer:'voir circulaire',
+  add:'Ajouter', added:'Ajouté', each:'ch.', see_flyer:'voir circulaire', report:'Signaler un problème avec ce prix',
+  low:'📉 plus bas en {n} sem.',
+  fy:'Pour vous', fy_n:'Pour vous, {n}', fy_cta_t:'Voyez d\'abord ce qui vous intéresse', fy_cta:'Ajoutez les produits que vous achetez souvent et vos magasins préférés.',
   c_fruits:'Fruits', c_legumes:'Légumes', c_viandes:'Viandes', c_poissons:'Poissons', c_laitiers:'Laitiers et œufs',
   c_boulangerie:'Boulangerie', c_epicerie:'Épicerie', c_surgeles:'Surgelés', c_boissons:'Boissons', c_menage:'Maison et hygiène', c_autres:'Autres',
   w_title_cur:'Où magasiner cette semaine?', w_title_next:'Où magasiner la semaine prochaine?',
-  w_sub:'On compare un panier de base de {n} produits. Viandes et fruits sont comparés au kilo (1 lb = 0,454 kg).',
+  w_mine:'Comparaison de <b>votre panier</b> ({n} produits).', w_comm:'Comparaison du panier de base de la communauté ({n} produits). Créez le vôtre dans « Mon profil ».',
+  w_kg:'Viandes et fruits sont comparés au kilo (1 lb = 0,454 kg).', w_stores:'Magasins comparés : {s}.',
   w_one:'Un seul magasin? Allez chez {s} : meilleur prix pour {n} des {t} produits.',
   w_two:'En combinant {a} + {b}, vous avez {n} produits au meilleur prix.',
   w_best:'meilleur prix', products:'produits', product1:'produit',
+  w_addbest:'Ajouter les meilleurs prix à ma liste', w_added:'{n} produits ajoutés à votre liste', w_edit:'Modifier mon panier',
   w_when:'Quand acheter?',
   w_wait:'<b>{i}</b> : attendez — moins cher à partir du {d} chez {s}.',
   w_starts:'<b>{i}</b> : en rabais à partir du {d} chez {s}.',
-  w_detail:'Le panier, produit par produit', w_none:'Pas en circulaire', w_others:'Autres offres ({n})',
-  w_edit:'Ce panier est défini dans le fichier lista_compras.txt.',
-  l_title:'Ma liste d\'épicerie', l_empty:'Votre liste est vide. Touchez « Ajouter » sur un produit : il apparaîtra ici, classé par magasin.',
+  w_detail:'Le panier, produit par produit', w_none:'Pas en circulaire', w_others:'Autres offres ({n})', w_mysec:'Mes produits',
+  l_title:'Ma liste d\'épicerie', l_empty:'Votre liste est vide. Touchez « Ajouter » sur un produit, ou ajoutez d\'un coup les meilleurs prix de votre panier dans « Où magasiner? ».',
   l_local:'Votre liste reste sur cet appareil. Aucune inscription.',
   l_share:'Partager', l_copy:'Copier la liste', l_clear:'Vider', l_confirm:'Confirmer?', l_copied:'Liste copiée!',
   l_expired:'offre terminée', l_n:'{n} produits', l_n1:'1 produit',
-  wt_title:'Produits à surveiller', wt_sub:'Ajoutez ce que vous achetez souvent. On vous montre où c\'est le moins cher.',
-  wt_ph:'ex. café, fromage cheddar, papier hygiénique', wt_add:'Suivre', wt_none:'Pas en circulaire en ce moment.',
-  wt_best:'Meilleur : {s}', next_short:'sem. proch.',
+  p_title:'Mon profil', p_sub:'Vos préférences restent dans le navigateur de cet appareil (IndexedDB). Aucune inscription, rien n\'est envoyé.',
+  p_name:'Votre prénom (optionnel)', p_name_ph:'ex. Diego',
+  p_stores:'Mes magasins', p_stores_sub:'Seuls ces magasins sont affichés et comparés. Aucun choisi = tous.',
+  p_fav:'Catégories favorites', p_fav_sub:'Elles apparaissent en premier dans les aubaines.',
+  p_hide:'Catégories à masquer', p_hide_sub:'Elles disparaissent des aubaines (la recherche les trouve encore).',
+  p_basket:'Mon panier', p_basket_sub:'Les produits que vous achetez souvent. Ils apparaissent dans « Pour vous » et sont comparés dans « Où magasiner? ».',
+  p_basket_empty:'Votre panier est vide : on utilise le panier de base de la communauté.', p_from_comm:'Partir du panier de base',
+  p_add_ph:'Ajouter un produit (en français) : café, fromage cheddar…', p_add:'Ajouter', p_suggest:'Suggestions :', p_tip:'Astuce : « -mot » exclut, ex. « fraises -yogourt ».',
+  p_theme:'Thème', th_auto:'Auto', th_light:'Clair', th_dark:'Sombre',
+  p_sort:'Tri par défaut',
+  p_install:'Installer sur mon téléphone', inst_btn:'Installer l\'app', inst_done:'L\'app est installée sur cet appareil ✓',
+  inst_ios:'Dans Safari, touchez le bouton Partager puis « Sur l\'écran d\'accueil ».', inst_other:'Dans le menu du navigateur, choisissez « Installer l\'application » ou « Ajouter à l\'écran d\'accueil ».',
+  inst_why:'Sur iPhone, installer l\'app évite que Safari efface vos données après 7 jours sans visite.',
+  p_backup:'Sauvegarde et transfert', p_backup_sub:'Utilisez votre profil sur un autre appareil ou partagez votre panier avec votre famille.',
+  x_link:'Lien de transfert', x_export:'Exporter (fichier)', x_import:'Importer un fichier', x_reset:'Tout effacer', x_linkcopied:'Lien copié!',
+  imported:'Profil importé ✓', saved_ok:'Enregistré ✓', bad_file:'Fichier invalide',
+  p_data:'Mes données', st_p:'Stockage protégé par le navigateur ✓', st_np:'Stockage standard du navigateur',
+  hist_n:'Historique des prix : {n} semaines enregistrées sur cet appareil.', hist_0:'L\'historique des prix commence aujourd\'hui : revenez chaque semaine pour voir les « plus bas en X semaines ».',
+  rep_subj:'Prix à vérifier', rep_intro:'Bonjour, je signale un problème avec ce produit :', rep_what:'Ce qui ne va pas :',
+  bug_subj:'Bug / suggestion', bug_intro:'Bonjour, voici mon commentaire sur Aubaines Val-Bélair :',
   about:'À propos', about_txt:'Un outil gratuit pour la communauté de Val-Bélair. Les données sont mises à jour automatiquement chaque matin.',
-  made_by:'Une initiative', stores_title:'Magasins comparés', notice:'Important',
+  made_by:'Une initiative', stores_title:'Magasins comparés',
+  contact:'Signaler / suggérer', contact_txt:'Un prix erroné, un bug ou une idée? Écrivez-nous.', contact_btn:'✉ Écrire à l\'équipe',
   notice_txt:'Prix tirés des circulaires publiques; vérifiez en magasin. Certains prix exigent une carte de fidélité ou un achat minimum. Non affilié à Maxi, Metro, IGA ou Super C.',
-  updated:'Mis à jour le {d} à {h}', share_title:'Ma liste — Aubaines Val-Bélair'
+  updated:'Mis à jour le {d} à {h}', share_title:'Ma liste — Aubaines Val-Bélair',
+  share:'Partager', share_deal_t:'Partager cette aubaine', close:'Fermer', sh_mail:'Courriel', sh_copy:'Copier le lien', link_copied:'Lien copié!',
+  sh_app_t:'Partager avec la communauté', sh_app:'Les circulaires de Maxi, Metro, IGA et Super C comparées chaque jour pour la région de Québec. Gratuit, sans inscription.',
+  sh_deal_t:'Partager cette aubaine', sh_deal:'🔥 {n} — {p} chez {s} ({d}).\nD\'autres aubaines de la région de Québec :',
+  region_ref:'magasins de référence près de {b}',
+  reg_title:'Région couverte', reg_txt:'Les prix viennent des circulaires de la {r}. Les circulaires de ces chaînes sont en général les mêmes dans tous les magasins participants de la région; seules les adresses ci-dessous sont celles près de {b}.',
+  reg_other:'Vous habitez ailleurs au Québec et voulez la même chose pour votre secteur?', reg_btn:'📍 Demander ma région',
+  reg_subj:'Demande de région', reg_body:'Bonjour, j\'aimerais utiliser Aubaines dans ma région.\n\nMa ville / mon quartier :\nMon code postal (les 3 premiers caractères suffisent) :\nLes épiceries où je magasine :\n'
 },
 pt: {
   product:'Aubaines Val-Bélair', by:'por',
   hero_title:'As melhores promoções da semana, num só lugar',
   hero_sub:'Os folhetos do Maxi, Metro, IGA e Super C comparados para você toda manhã. Pesquise, filtre e monte sua lista.',
+  hello:'Olá, {n} 👋', hello_sub:'{k} produtos da sua cesta estão em promoção esta semana nas suas lojas.', hello_sub1:'1 produto da sua cesta está em promoção esta semana nas suas lojas.', hello_sub0:'Aqui estão as promoções das suas lojas esta semana.',
   week_cur:'Esta semana', week_next:'Próxima semana', not_yet:'ainda não publicado',
   st_deals:'ofertas', st_disc:'com desconto', st_stores:'mercados',
   banner_next:'O folheto novo começa amanhã.', see_next:'Ver a próxima semana',
-  tab_deals:'Ofertas', tab_where:'Onde comprar?', tab_list:'Minha lista',
+  ob_title:'Deixe o app com a sua cara.', ob_txt:'Escolha suas lojas, sua cesta e suas categorias. Tudo fica no seu aparelho, sem cadastro.', ob_go:'Personalizar', ob_later:'Depois',
+  imp_banner:'Compartilharam um perfil com você (cesta com {n} produtos, lista com {m} produtos).', imp_yes:'Importar', imp_no:'Ignorar',
+  tab_deals:'Ofertas', tab_where:'Onde comprar?', tab_list:'Minha lista', tab_prof:'⚙ Meu perfil',
   search_ph:'Buscar em francês: poulet, fraises…',
   all:'Tudo', only_disc:'Só com desconto', sort:'Ordenar',
   s_auto:'Recomendado', s_disc:'Maior desconto', s_kg:'Menor preço por kg', s_price:'Menor preço', s_az:'A → Z',
   results:'{n} produtos', results1:'1 produto', more:'Ver mais ({n})',
   nothing:'Nenhum produto encontrado. Tente outra palavra (em francês) ou tire filtros.',
-  add:'Adicionar', added:'Na minha lista', each:'cada', see_flyer:'ver folheto',
+  add:'Adicionar', added:'Na lista', each:'cada', see_flyer:'ver folheto', report:'Relatar problema com este preço',
+  low:'📉 menor em {n} sem.',
+  fy:'Para você', fy_n:'Para você, {n}', fy_cta_t:'Veja primeiro o que interessa a você', fy_cta:'Adicione os produtos que você compra sempre e suas lojas preferidas.',
   c_fruits:'Frutas', c_legumes:'Legumes', c_viandes:'Carnes', c_poissons:'Peixes', c_laitiers:'Laticínios e ovos',
   c_boulangerie:'Padaria', c_epicerie:'Mercearia', c_surgeles:'Congelados', c_boissons:'Bebidas', c_menage:'Casa e higiene', c_autres:'Outros',
   w_title_cur:'Onde comprar esta semana?', w_title_next:'Onde comprar na próxima semana?',
-  w_sub:'Comparamos uma cesta básica de {n} produtos. Carnes e frutas são comparadas por quilo (1 lb = 0,454 kg).',
+  w_mine:'Comparação da <b>sua cesta</b> ({n} produtos).', w_comm:'Comparação da cesta básica da comunidade ({n} produtos). Monte a sua em “Meu perfil”.',
+  w_kg:'Carnes e frutas são comparadas por quilo (1 lb = 0,454 kg).', w_stores:'Lojas comparadas: {s}.',
   w_one:'Uma loja só? Vá ao {s}: melhor preço em {n} dos {t} produtos.',
   w_two:'Combinando {a} + {b}, você pega {n} produtos no melhor preço.',
   w_best:'melhor preço', products:'produtos', product1:'produto',
+  w_addbest:'Colocar os melhores preços na minha lista', w_added:'{n} produtos adicionados à sua lista', w_edit:'Editar minha cesta',
   w_when:'Quando comprar?',
   w_wait:'<b>{i}</b>: espere — mais barato a partir de {d} no {s}.',
   w_starts:'<b>{i}</b>: entra em promoção {d} no {s}.',
-  w_detail:'A cesta, item por item', w_none:'Sem promoção', w_others:'Outras ofertas ({n})',
-  w_edit:'A cesta é definida no arquivo lista_compras.txt.',
-  l_title:'Minha lista de compras', l_empty:'Sua lista está vazia. Toque em “Adicionar” num produto: ele aparece aqui, separado por loja.',
+  w_detail:'A cesta, item por item', w_none:'Sem promoção', w_others:'Outras ofertas ({n})', w_mysec:'Meus produtos',
+  l_title:'Minha lista de compras', l_empty:'Sua lista está vazia. Toque em “Adicionar” num produto, ou coloque de uma vez os melhores preços da sua cesta em “Onde comprar?”.',
   l_local:'Sua lista fica só neste aparelho. Sem cadastro.',
   l_share:'Compartilhar', l_copy:'Copiar lista', l_clear:'Limpar', l_confirm:'Confirmar?', l_copied:'Lista copiada!',
   l_expired:'oferta encerrada', l_n:'{n} produtos', l_n1:'1 produto',
-  wt_title:'Produtos para acompanhar', wt_sub:'Adicione o que você compra sempre (em francês). Mostramos onde está mais barato.',
-  wt_ph:'ex. café, fromage cheddar, papier hygiénique', wt_add:'Acompanhar', wt_none:'Sem promoção no momento.',
-  wt_best:'Melhor: {s}', next_short:'próx. sem.',
+  p_title:'Meu perfil', p_sub:'Suas preferências ficam no navegador deste aparelho (IndexedDB). Sem cadastro, nada é enviado.',
+  p_name:'Seu nome (opcional)', p_name_ph:'ex. Diego',
+  p_stores:'Minhas lojas', p_stores_sub:'Só essas lojas aparecem e são comparadas. Nenhuma escolhida = todas.',
+  p_fav:'Categorias favoritas', p_fav_sub:'Aparecem primeiro nas ofertas.',
+  p_hide:'Categorias para esconder', p_hide_sub:'Somem das ofertas (a busca ainda encontra).',
+  p_basket:'Minha cesta', p_basket_sub:'Os produtos que você compra sempre. Aparecem em “Para você” e são comparados em “Onde comprar?”.',
+  p_basket_empty:'Sua cesta está vazia: usamos a cesta básica da comunidade.', p_from_comm:'Começar pela cesta básica',
+  p_add_ph:'Adicionar produto (em francês): café, fromage cheddar…', p_add:'Adicionar', p_suggest:'Sugestões:', p_tip:'Dica: “-palavra” exclui, ex. “fraises -yogourt”.',
+  p_theme:'Tema', th_auto:'Auto', th_light:'Claro', th_dark:'Escuro',
+  p_sort:'Ordem padrão',
+  p_install:'Instalar no celular', inst_btn:'Instalar o app', inst_done:'O app está instalado neste aparelho ✓',
+  inst_ios:'No Safari, toque em Compartilhar e depois em “Adicionar à Tela de Início”.', inst_other:'No menu do navegador, escolha “Instalar app” ou “Adicionar à tela inicial”.',
+  inst_why:'No iPhone, instalar o app evita que o Safari apague seus dados após 7 dias sem visita.',
+  p_backup:'Backup e transferência', p_backup_sub:'Use seu perfil em outro aparelho ou compartilhe sua cesta com a família.',
+  x_link:'Link de transferência', x_export:'Exportar (arquivo)', x_import:'Importar arquivo', x_reset:'Apagar tudo', x_linkcopied:'Link copiado!',
+  imported:'Perfil importado ✓', saved_ok:'Salvo ✓', bad_file:'Arquivo inválido',
+  p_data:'Meus dados', st_p:'Armazenamento protegido pelo navegador ✓', st_np:'Armazenamento padrão do navegador',
+  hist_n:'Histórico de preços: {n} semanas registradas neste aparelho.', hist_0:'O histórico de preços começa hoje: volte toda semana para ver os “menor preço em X semanas”.',
+  rep_subj:'Preço para verificar', rep_intro:'Olá, quero relatar um problema com este produto:', rep_what:'O que está errado:',
+  bug_subj:'Bug / sugestão', bug_intro:'Olá, meu comentário sobre o Aubaines Val-Bélair:',
   about:'Sobre', about_txt:'Uma ferramenta gratuita para a comunidade de Val-Bélair. Os dados são atualizados automaticamente toda manhã.',
-  made_by:'Uma iniciativa', stores_title:'Lojas comparadas', notice:'Importante',
+  made_by:'Uma iniciativa', stores_title:'Lojas comparadas',
+  contact:'Relatar / sugerir', contact_txt:'Preço errado, bug ou ideia? Escreva para nós.', contact_btn:'✉ Escrever para a equipe',
   notice_txt:'Preços tirados dos folhetos públicos; confira na loja. Alguns preços exigem cartão de fidelidade ou compra mínima. Sem vínculo com Maxi, Metro, IGA ou Super C.',
-  updated:'Atualizado em {d} às {h}', share_title:'Minha lista — Aubaines Val-Bélair'
+  updated:'Atualizado em {d} às {h}', share_title:'Minha lista — Aubaines Val-Bélair',
+  share:'Compartilhar', share_deal_t:'Compartilhar esta oferta', close:'Fechar', sh_mail:'E-mail', sh_copy:'Copiar link', link_copied:'Link copiado!',
+  sh_app_t:'Compartilhar com a comunidade', sh_app:'Os folhetos do Maxi, Metro, IGA e Super C comparados todo dia para a região de Québec. Grátis, sem cadastro.',
+  sh_deal_t:'Compartilhar esta oferta', sh_deal:'🔥 {n} — {p} no {s} ({d}).\nMais promoções da região de Québec:',
+  region_ref:'lojas de referência perto de {b}',
+  reg_title:'Região coberta', reg_txt:'Os preços vêm dos folhetos da {r}. Os folhetos dessas redes costumam ser os mesmos em todas as lojas participantes da região; só os endereços abaixo são os de perto de {b}.',
+  reg_other:'Mora em outra parte do Québec e quer o mesmo para a sua região?', reg_btn:'📍 Pedir minha região',
+  reg_subj:'Pedido de região', reg_body:'Olá, gostaria de usar o Aubaines na minha região.\n\nMinha cidade / bairro:\nMeu código postal (as 3 primeiras letras/números bastam):\nOs mercados onde faço compras:\n'
 }};
 var DAYS = { fr:['dim','lun','mar','mer','jeu','ven','sam'], pt:['dom','seg','ter','qua','qui','sex','sáb'] };
 var CATS = ['fruits','legumes','viandes','poissons','laitiers','boulangerie','epicerie','surgeles','boissons','menage','autres'];
 var EMO = {fruits:'🍎',legumes:'🥦',viandes:'🥩',poissons:'🐟',laitiers:'🧀',boulangerie:'🥖',epicerie:'🥫',surgeles:'🧊',boissons:'🧃',menage:'🧴',autres:'🛒'};
 
-/* ---------------- utilidades ---------------- */
+/* ======================= utilidades ======================= */
 var LS = {
   get: function (k, d) { try { var v = localStorage.getItem(k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
-  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
 function $(s) { return document.querySelector(s); }
 function $$(s) { return Array.prototype.slice.call(document.querySelectorAll(s)); }
@@ -370,9 +505,72 @@ function t(k, v) { var s = (T[S.lang] && T[S.lang][k]) || T.fr[k] || k; if (v) f
 function day(isoStr) { if (!isoStr) return '?'; var p = isoStr.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]); return DAYS[S.lang][d.getDay()] + ' ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1); }
 function range(f, e) { return day(f) + ' → ' + day(e); }
 function cmpKey(a, b) { return a.key[0] - b.key[0] || a.key[1] - b.key[1]; }
-function plural(n, one, many) { return n === 1 ? t(one) : t(many, {n: n}); }
+function b64e(s) { return btoa(unescape(encodeURIComponent(s))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, ''); }
+function b64d(s) { s = s.replace(/-/g, '+').replace(/_/g, '/'); while (s.length % 4) s += '='; return decodeURIComponent(escape(atob(s))); }
+function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
-/* ---------------- dados ---------------- */
+/* ======================= IndexedDB (com espelho em localStorage) ======================= */
+var DB = (function () {
+  var p = null;
+  function open() {
+    if (p) return p;
+    p = new Promise(function (res, rej) {
+      if (!window.indexedDB) { rej(new Error('no idb')); return; }
+      var r;
+      try { r = indexedDB.open('aubaines-valbelair', 1); } catch (e) { rej(e); return; }
+      r.onupgradeneeded = function () {
+        var db = r.result;
+        if (!db.objectStoreNames.contains('kv')) db.createObjectStore('kv');
+        if (!db.objectStoreNames.contains('hist')) db.createObjectStore('hist');
+      };
+      r.onsuccess = function () { res(r.result); };
+      r.onerror = function () { rej(r.error); };
+      r.onblocked = function () { rej(new Error('blocked')); };
+    });
+    p.catch(function () {});
+    return p;
+  }
+  function tx(store, mode, fn) {
+    return open().then(function (db) {
+      return new Promise(function (res, rej) {
+        var x = db.transaction(store, mode), out;
+        var rq = fn(x.objectStore(store));
+        if (rq && 'onsuccess' in rq) rq.onsuccess = function () { out = rq.result; };
+        x.oncomplete = function () { res(out); };
+        x.onerror = x.onabort = function () { rej(x.error); };
+      });
+    });
+  }
+  return {
+    get: function (k) {
+      return tx('kv', 'readonly', function (st) { return st.get(k); })
+        .then(function (v) { return v === undefined ? LS.get('zc_' + k, undefined) : v; }, function () { return LS.get('zc_' + k, undefined); });
+    },
+    set: function (k, v) { LS.set('zc_' + k, v); return tx('kv', 'readwrite', function (st) { st.put(v, k); }).catch(function () {}); },
+    histAll: function () {
+      return open().then(function (db) {
+        return new Promise(function (res) {
+          var x = db.transaction('hist', 'readonly'), out = {}, c = x.objectStore('hist').openCursor();
+          c.onsuccess = function () { var cur = c.result; if (cur) { out[cur.key] = cur.value; cur.continue(); } };
+          x.oncomplete = function () { res(out); }; x.onerror = function () { res(out); };
+        });
+      }).catch(function () { return {}; });
+    },
+    histPut: function (map) { return tx('hist', 'readwrite', function (st) { for (var k in map) st.put(map[k], k); }).catch(function () {}); },
+    wipe: function () {
+      ['profile', 'saved', 'checked', 'watch', 'lang'].forEach(function (k) { LS.del('zc_' + k); });
+      return open().then(function (db) {
+        return new Promise(function (res) {
+          var x = db.transaction(['kv', 'hist'], 'readwrite');
+          x.objectStore('kv').clear(); x.objectStore('hist').clear();
+          x.oncomplete = res; x.onerror = res;
+        });
+      }).catch(function () {});
+    }
+  };
+})();
+
+/* ======================= dados ======================= */
 var TODAY = iso(new Date());
 var STORES = D.lojas;
 var COLOR = {}; STORES.forEach(function (s) { COLOR[s.nome] = s.cor; });
@@ -380,6 +578,7 @@ var OF = D.ofertas.filter(function (o) { return !o.e || o.e >= TODAY; });
 OF.forEach(function (o) {
   o.w = (o.f && o.f > TODAY) ? 'next' : 'cur';
   o.key = o.kg != null ? [0, o.kg] : (o.pu != null ? [1, o.pu] : [2, 0]);
+  o.hk = o.s + '|' + o.k;
 });
 var BYID = {}; OF.forEach(function (o) { BYID[o.i] = o; });
 function period(w) {
@@ -389,92 +588,235 @@ function period(w) {
 }
 var PER = { cur: period('cur'), next: period('next') };
 var HAS_NEXT = !!PER.next;
+var COMMUNITY = D.cesta.map(function (it, i) {
+  return { id: 'c' + i, fr: it.fr, pt: it.pt, sec_fr: it.sec_fr, sec_pt: it.sec_pt, termos: it.termos, excl: it.excl || [] };
+});
+var HIST = {};
 
-/* ---------------- estado ---------------- */
+/* ======================= perfil e estado ======================= */
 var params = new URLSearchParams(location.search);
+function guessLang() { return (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'fr'; }
+function defProfile() {
+  return { v: 1, name: '', lang: LS.get('zc_lang', guessLang()), stores: [], fav: [], hide: [], basket: [],
+           theme: 'auto', sort: 'auto', onboarded: false, dismissed: false };
+}
+function fixProfile(p) {
+  var d = defProfile();
+  p = p && typeof p === 'object' ? p : {};
+  for (var k in d) if (p[k] === undefined || p[k] === null) p[k] = d[k];
+  ['stores', 'fav', 'hide', 'basket'].forEach(function (k) { if (!Array.isArray(p[k])) p[k] = []; });
+  p.stores = p.stores.filter(function (s) { return COLOR[s]; });
+  if (!T[p.lang]) p.lang = 'fr';
+  return p;
+}
+var P = fixProfile(LS.get('zc_profile', null));
+var saved = LS.get('zc_saved', {}) || {};
+var checked = LS.get('zc_checked', {}) || {};
 var S = {
-  lang: params.get('lang') || LS.get('zc_lang', (navigator.language || '').toLowerCase().indexOf('pt') === 0 ? 'pt' : 'fr'),
+  lang: params.get('lang') || P.lang,
   week: params.get('semaine') === 'next' && HAS_NEXT ? 'next' : 'cur',
   tab: params.get('tab') || 'deals',
-  q: params.get('q') || '', stores: {}, cat: params.get('cat') || '', sort: 'auto', disc: false, limit: 48
+  q: params.get('q') || '', stores: {}, cat: params.get('cat') || '', sort: P.sort, disc: false, limit: 48,
+  pendingImport: null, persisted: false, confirmClear: false, confirmReset: false
 };
 if (!T[S.lang]) S.lang = 'fr';
-if (['deals','where','list'].indexOf(S.tab) < 0) S.tab = 'deals';
-var saved = LS.get('zc_saved', {});
-var checked = LS.get('zc_checked', {});
-var watch = LS.get('zc_watch', []);
-var confirmClear = false;
+if (['deals', 'where', 'list', 'prof'].indexOf(S.tab) < 0) S.tab = 'deals';
 
-/* ---------------- render: estático ---------------- */
-function renderStatic() {
-  document.documentElement.lang = S.lang === 'pt' ? 'pt-BR' : 'fr-CA';
-  $$('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
-  $('#q').placeholder = t('search_ph');
-  $$('.seg button').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === S.lang); });
-  var sort = $('#sort');
-  sort.innerHTML = ['auto','disc','kg','price','az'].map(function (k) { return '<option value="' + k + '">' + t('s_' + k) + '</option>'; }).join('');
-  sort.value = S.sort;
-  $('#addr').innerHTML = STORES.map(function (s) { return '<li><span class="store" style="--c:' + s.cor + '">' + esc(s.nome) + '</span> ' + esc(s.endereco) + '</li>'; }).join('');
-  var g = new Date(D.gerado);
-  $('#updated').textContent = isNaN(g) ? '' : t('updated', { d: day(iso(g)), h: pad(g.getHours()) + 'h' + pad(g.getMinutes()) });
+function migrateOld() {
+  var old = LS.get('zc_watch', null);
+  if (Array.isArray(old) && old.length && !P.basket.length) {
+    old.forEach(function (term) { var it = customItem(term); if (it) P.basket.push(it); });
+    LS.del('zc_watch');
+  }
+}
+var saveT;
+function saveProfile(quiet) {
+  P.lang = S.lang;
+  clearTimeout(saveT);
+  saveT = setTimeout(function () { DB.set('profile', P); askPersist(); if (!quiet) toast(t('saved_ok')); }, 250);
+}
+function saveList() { DB.set('saved', saved); DB.set('checked', checked); askPersist(); }
+function askPersist() {
+  if (!(navigator.storage && navigator.storage.persist)) return;
+  navigator.storage.persisted().then(function (x) { return x || navigator.storage.persist(); })
+    .then(function (x) { S.persisted = !!x; }).catch(function () {});
+}
+function applyTheme() { document.documentElement.setAttribute('data-theme', P.theme || 'auto'); }
+
+/* ======================= cesta ======================= */
+function customItem(text) {
+  var toks = String(text || '').trim().split(/\s+/), ex = [], inc = [];
+  toks.forEach(function (w) { if (w.charAt(0) === '-' && w.length > 1) ex.push(w.slice(1)); else if (w) inc.push(w); });
+  var label = inc.join(' ').trim();
+  if (!label) return null;
+  var termos = label.split('|').map(function (s) { return s.trim(); }).filter(Boolean);
+  return { id: 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), fr: termos[0], pt: termos[0], termos: termos, excl: ex };
+}
+function activeBasket() { return P.basket.length ? P.basket : COMMUNITY; }
+var RXC = {};
+function rxItem(it) {
+  var k = it.termos.join('|') + '#' + (it.excl || []).join('|');
+  if (!RXC[k]) RXC[k] = {
+    regs: it.termos.map(function (a) { return words(a).map(rxWord); }).filter(function (r) { return r.length; }),
+    ex: (it.excl || []).map(rxPre)
+  };
+  return RXC[k];
+}
+function matches(it, o) {
+  var R = rxItem(it);
+  for (var i = 0; i < R.ex.length; i++) if (R.ex[i].test(o.k)) return false;
+  return R.regs.some(function (rs) { return rs.every(function (r) { return r.test(o.k); }); });
+}
+function myStore(s) { return !P.stores.length || P.stores.indexOf(s) >= 0; }
+function myStoresList() { return P.stores.length ? P.stores : STORES.map(function (s) { return s.nome; }); }
+function basket(week) {
+  return activeBasket().map(function (it) {
+    var seen = {};
+    var m = OF.filter(function (o) { return o.w === week && o.p != null && myStore(o.s) && matches(it, o); })
+      .sort(cmpKey).filter(function (o) { var k = o.s + '|' + o.n + '|' + o.p; if (seen[k]) return false; seen[k] = 1; return true; });
+    var best = m[0], tie = {};
+    if (best) m.forEach(function (o) { if (o.key[0] === best.key[0] && o.key[1] <= best.key[1] * 1.005 && !tie[o.s]) tie[o.s] = o; });
+    return { it: it, offers: m, best: best, tie: tie };
+  });
+}
+function label(it) { return S.lang === 'pt' ? (it.pt || it.fr) : (it.fr || it.pt); }
+
+/* ======================= histórico de preços (IndexedDB) ======================= */
+function lowWeeks(o) {
+  var h = HIST[o.hk];
+  if (!h || o.p == null) return 0;
+  var n = 0, min = Infinity;
+  for (var wk in h) {
+    if (wk === o.f) continue;
+    var e = h[wk];
+    if (e[0] !== o.key[0]) continue;
+    n++; if (e[1] < min) min = e[1];
+  }
+  return (n >= 2 && o.key[1] <= min * 1.001) ? n + 1 : 0;
+}
+function recordHistory() {
+  DB.histAll().then(function (all) {
+    var changed = {}, limite = iso(new Date(Date.now() - 200 * 864e5));
+    OF.forEach(function (o) {
+      if (o.p == null || !o.f || o.key[0] === 2) return;
+      var h = all[o.hk] || {}, cur = h[o.f], v = [o.key[0], Math.round(o.key[1] * 100) / 100];
+      if (!cur || cur[0] !== v[0] || v[1] < cur[1]) {
+        h[o.f] = v;
+        Object.keys(h).forEach(function (w) { if (w < limite) delete h[w]; });
+        all[o.hk] = h; changed[o.hk] = h;
+      }
+    });
+    HIST = all;
+    if (Object.keys(changed).length) DB.histPut(changed);
+    renderPanel();
+  });
+}
+function histWeeks() {
+  var s = {};
+  for (var k in HIST) for (var w in HIST[k]) s[w] = 1;
+  return Object.keys(s).length;
 }
 
-function renderHero() {
-  $('#weeks').innerHTML = ['cur', 'next'].map(function (w) {
-    var p = PER[w], dis = w === 'next' && !HAS_NEXT;
-    return '<button data-week="' + w + '" aria-pressed="' + (S.week === w) + '"' + (dis ? ' disabled' : '') + '><b>' + t('week_' + w) + '</b><small>' + (p ? range(p[0], p[1]) : t('not_yet')) + '</small></button>';
-  }).join('');
-  var wk = OF.filter(function (o) { return o.w === S.week; });
-  var nd = wk.filter(function (o) { return o.d; }).length;
-  var ns = {}; wk.forEach(function (o) { ns[o.s] = 1; });
-  $('#stats').innerHTML = '<div><b>' + wk.length + '</b>' + t('st_deals') + '</div><div><b>' + nd + '</b>' + t('st_disc') + '</div><div><b>' + Object.keys(ns).length + '</b>' + t('st_stores') + '</div>';
-  var endsToday = PER.cur && PER.cur[1] === TODAY;
-  $('#banner').innerHTML = (HAS_NEXT && S.week === 'cur' && endsToday)
-    ? '<div class="banner"><span>' + t('banner_next') + '</span><button data-week="next">' + t('see_next') + ' →</button></div>' : '';
-}
-
-function renderTabs() {
-  $$('.tabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === S.tab); });
-  $('#p-deals').hidden = S.tab !== 'deals';
-  $('#p-where').hidden = S.tab !== 'where';
-  $('#p-list').hidden = S.tab !== 'list';
-  var n = Object.keys(saved).length, c = $('#listcount');
-  c.hidden = !n; c.textContent = n;
-}
-
-/* ---------------- aba Aubaines ---------------- */
+/* ======================= formatação ======================= */
 function priceMain(o) {
   if (o.p == null) return '<span class="nop">' + esc(o.t || t('see_flyer')) + '</span>';
   var unit = o.u === 'lb' ? ' <small>/lb</small>' : o.u === 'kg' ? ' <small>/kg</small>' : o.u === '100g' ? ' <small>/100 g</small>' : '';
-  var main = o.q > 1 ? o.q + '<small> / </small>' + money(o.p) : money(o.p);
-  return main + unit;
+  return (o.q > 1 ? o.q + '<small> / </small>' + money(o.p) : money(o.p)) + unit;
 }
 function priceText(o) {
   if (o.p == null) return o.t || t('see_flyer');
-  var s = (o.q > 1 ? o.q + ' / ' : '') + money(o.p);
-  return s + (o.u === 'lb' ? '/lb' : o.u === 'kg' ? '/kg' : o.u === '100g' ? '/100 g' : '');
+  return (o.q > 1 ? o.q + ' / ' : '') + money(o.p) + (o.u === 'lb' ? '/lb' : o.u === 'kg' ? '/kg' : o.u === '100g' ? '/100 g' : '');
 }
 function kgText(o) { return o.kg != null ? (o.ka ? '≈ ' : '') + money(o.kg) + '/kg' : ''; }
 function storeBadge(s) { return '<span class="store" style="--c:' + (COLOR[s] || '#475569') + '">' + esc(s) + '</span>'; }
+function addBtnText(on) { return on ? '✓ ' + t('added') : '+ ' + t('add'); }
 
-function card(o) {
+function card(o, lbl) {
   var emo = EMO[o.c] || '🛒';
   var img = o.img ? '<img loading="lazy" src="' + esc(o.img) + '" alt="" onerror="this.style.display=\'none\';this.nextSibling.style.display=\'block\'"><span class="emo" style="display:none">' + emo + '</span>'
                   : '<span class="emo">' + emo + '</span>';
   var was = (o.o && o.p && o.q === 1 && o.o > o.p) ? '<span class="was">' + money(o.o) + '</span>' : '';
-  var on = !!saved[o.i];
-  return '<article class="card"><div class="ph">' + img + (o.d ? '<span class="disc">-' + o.d + '%</span>' : '') + '</div>' +
-    '<div class="body"><div>' + storeBadge(o.s) + '</div><h3>' + esc(o.n) + '</h3>' +
+  var lw = lowWeeks(o), on = !!saved[o.i];
+  return '<article class="card"><div class="ph">' + img + (o.d ? '<span class="disc">-' + o.d + '%</span>' : '') +
+    (lw ? '<span class="low">' + t('low', { n: lw }) + '</span>' : '') + '</div>' +
+    '<div class="body">' + (lbl ? '<div class="lbl">' + esc(lbl) + '</div>' : '') + '<div>' + storeBadge(o.s) + '</div><h3>' + esc(o.n) + '</h3>' +
     (o.b ? '<div class="bn">' + esc(o.b) + '</div>' : '') +
     (o.t && o.p != null ? '<div class="note">' + esc(o.t) + '</div>' : '') +
     '<div class="price">' + priceMain(o) + was + '</div>' +
     (o.kg != null ? '<div class="kg">' + kgText(o) + '</div>' : '') +
     (o.q > 1 && o.pu != null ? '<div class="kg">= ' + money(o.pu) + ' ' + t('each') + '</div>' : '') +
     '<div class="dates">' + range(o.f, o.e) + '</div>' +
-    '<button class="add" data-add="' + esc(o.i) + '" aria-pressed="' + on + '">' + (on ? '✓ ' + t('added') : '+ ' + t('add')) + '</button>' +
+    '<div class="acts"><button class="add" data-add="' + esc(o.i) + '" aria-pressed="' + on + '">' + addBtnText(on) + '</button>' +
+    '<button class="rep" data-sharedeal="' + esc(o.i) + '" title="' + esc(t('share_deal_t')) + '" aria-label="' + esc(t('share_deal_t')) + '">↗</button>' +
+    '<button class="rep" data-report="' + esc(o.i) + '" title="' + esc(t('report')) + '" aria-label="' + esc(t('report')) + '">⚑</button></div>' +
     '</div></article>';
 }
 
+/* ======================= render: estático, hero, abas ======================= */
+function renderStatic() {
+  document.documentElement.lang = S.lang === 'pt' ? 'pt-BR' : 'fr-CA';
+  $$('[data-t]').forEach(function (el) { el.textContent = t(el.getAttribute('data-t')); });
+  $('#q').placeholder = t('search_ph');
+  $$('.seg button[data-lang]').forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-lang') === S.lang); });
+  var sort = $('#sort');
+  sort.innerHTML = ['auto', 'disc', 'kg', 'price', 'az'].map(function (k) { return '<option value="' + k + '">' + t('s_' + k) + '</option>'; }).join('');
+  sort.value = S.sort;
+  $('#addr').innerHTML = STORES.map(function (s) { return '<li>' + storeBadge(s.nome) + ' ' + esc(s.endereco) + '</li>'; }).join('');
+  var g = new Date(D.gerado);
+  $('#updated').textContent = isNaN(g) ? '' : t('updated', { d: day(iso(g)), h: pad(g.getHours()) + 'h' + pad(g.getMinutes()) });
+  $('#mailtxt').textContent = CONTATO.join('@');
+  var RG = D.regiao || { nome: 'Région de Québec', referencia: 'Val-Bélair' };
+  $('#regionpill').innerHTML = '📍 ' + esc(RG.nome) + '<span class="rl"> · ' + esc(t('region_ref', { b: RG.referencia })) + '</span>';
+  $('#regtxt').textContent = t('reg_txt', { r: RG.nome.charAt(0).toLowerCase() + RG.nome.slice(1), b: RG.referencia });
+  $('#regmail').href = mailto('[Aubaines] ' + t('reg_subj'), t('reg_body'));
+  $('#shareapp').setAttribute('aria-label', t('share'));
+  $('#bugmail').href = mailto('[Aubaines] ' + t('bug_subj'), [t('bug_intro'), '', '', '—', 'Page : ' + location.href.split('#')[0],
+    'Données : ' + D.gerado, 'Appareil : ' + navigator.userAgent].join('\n'));
+}
+function heroSubCount() {
+  var n = 0;
+  basket('cur').forEach(function (r) { if (r.best && r.best.d) n++; });
+  return n;
+}
+function renderHero() {
+  if (P.name) {
+    $('#h1').textContent = t('hello', { n: P.name });
+    var k = heroSubCount();
+    $('#hsub').textContent = k === 0 ? t('hello_sub0') : k === 1 ? t('hello_sub1') : t('hello_sub', { k: k });
+  } else {
+    $('#h1').textContent = t('hero_title');
+    $('#hsub').textContent = t('hero_sub');
+  }
+  $('#weeks').innerHTML = ['cur', 'next'].map(function (w) {
+    var p = PER[w], dis = w === 'next' && !HAS_NEXT;
+    return '<button data-week="' + w + '" aria-pressed="' + (S.week === w) + '"' + (dis ? ' disabled' : '') + '><b>' + t('week_' + w) + '</b><small>' + (p ? range(p[0], p[1]) : t('not_yet')) + '</small></button>';
+  }).join('');
+  var wk = OF.filter(function (o) { return o.w === S.week && myStore(o.s); });
+  var nd = wk.filter(function (o) { return o.d; }).length, ns = {};
+  wk.forEach(function (o) { ns[o.s] = 1; });
+  $('#stats').innerHTML = '<div><b>' + wk.length + '</b>' + t('st_deals') + '</div><div><b>' + nd + '</b>' + t('st_disc') + '</div><div><b>' + Object.keys(ns).length + '</b>' + t('st_stores') + '</div>';
+
+  var b = '';
+  if (S.pendingImport) {
+    var pi = S.pendingImport;
+    b = '<div class="banner brandb"><span>' + t('imp_banner', { n: ((pi.p && pi.p.basket) || []).length, m: Object.keys(pi.s || {}).length }) + '</span>' +
+        '<span class="bb"><button id="imp-yes">' + t('imp_yes') + '</button><button class="ghost" id="imp-no">' + t('imp_no') + '</button></span></div>';
+  } else if (!P.onboarded && !P.dismissed && S.tab !== 'prof') {
+    b = '<div class="banner brandb"><span><b>' + t('ob_title') + '</b> ' + t('ob_txt') + '</span>' +
+        '<span class="bb"><button data-go="prof">' + t('ob_go') + '</button><button class="ghost" id="ob-later">' + t('ob_later') + '</button></span></div>';
+  } else if (HAS_NEXT && S.week === 'cur' && PER.cur && PER.cur[1] === TODAY) {
+    b = '<div class="banner"><span>' + t('banner_next') + '</span><span class="bb"><button data-week="next">' + t('see_next') + ' →</button></span></div>';
+  }
+  $('#banner').innerHTML = b;
+}
+function renderTabs() {
+  $$('.tabs [data-tab]').forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-tab') === S.tab); });
+  ['deals', 'where', 'list', 'prof'].forEach(function (k) { $('#p-' + k).hidden = S.tab !== k; });
+  var n = Object.keys(saved).length, c = $('#listcount');
+  c.hidden = !n; c.textContent = n;
+}
+
+/* ======================= aba Aubaines ======================= */
 function queryFilter(q) {
   var inc = [], exc = [];
   norm(q).split(/[\s']+/).forEach(function (w) {
@@ -488,75 +830,72 @@ function queryFilter(q) {
     return true;
   };
 }
-
+function renderForYou() {
+  var box = $('#foryou');
+  if (S.q || S.cat) { box.innerHTML = ''; return; }
+  var items = [];
+  if (P.basket.length) {
+    basket(S.week).forEach(function (r) { if (r.best) items.push({ o: r.best, l: label(r.it) }); });
+    items.sort(function (a, b) { return (b.o.d || 0) - (a.o.d || 0); });
+  } else if (P.fav.length) {
+    OF.filter(function (o) { return o.w === S.week && myStore(o.s) && o.d && P.fav.indexOf(o.c) >= 0; })
+      .sort(function (a, b) { return (b.d || 0) - (a.d || 0); }).slice(0, 12).forEach(function (o) { items.push({ o: o, l: '' }); });
+  }
+  if (items.length) {
+    box.innerHTML = '<div class="fy"><h2>' + esc(P.name ? t('fy_n', { n: P.name }) : t('fy')) + '</h2><div class="fyrow">' +
+      items.slice(0, 16).map(function (x) { return card(x.o, x.l); }).join('') + '</div></div>';
+  } else if (!P.basket.length && !P.fav.length && P.onboarded && !P.dismissed) {
+    box.innerHTML = '<div class="cta"><div><b>' + t('fy_cta_t') + '</b><span>' + t('fy_cta') + '</span></div><button class="btn pri" data-go="prof">' + t('ob_go') + '</button></div>';
+  } else box.innerHTML = '';
+}
 function renderDeals() {
+  renderForYou();
   var qf = queryFilter(S.q);
   var anyStore = Object.keys(S.stores).length === 0;
   var base = OF.filter(function (o) {
-    return o.w === S.week && (anyStore || S.stores[o.s]) && (!S.disc || o.d) && qf(o);
+    return o.w === S.week && myStore(o.s) && (anyStore || S.stores[o.s]) && (!S.disc || o.d) && qf(o) &&
+      (S.q || S.cat === o.c || P.hide.indexOf(o.c) < 0);
   });
   var counts = {}; base.forEach(function (o) { counts[o.c] = (counts[o.c] || 0) + 1; });
   var list = S.cat ? base.filter(function (o) { return o.c === S.cat; }) : base.slice();
   var mode = S.sort === 'auto' ? (S.q ? 'kg' : 'disc') : S.sort;
-  if (mode === 'disc') list.sort(function (a, b) { return (b.d || 0) - (a.d || 0) || cmpKey(a, b); });
+  var fav = function (o) { return (S.sort === 'auto' && !S.q && P.fav.indexOf(o.c) >= 0) ? 0 : 1; };
+  if (mode === 'disc') list.sort(function (a, b) { return fav(a) - fav(b) || (b.d || 0) - (a.d || 0) || cmpKey(a, b); });
   else if (mode === 'kg') list.sort(cmpKey);
   else if (mode === 'price') list.sort(function (a, b) { return (a.pu == null) - (b.pu == null) || (a.pu || 0) - (b.pu || 0); });
   else list.sort(function (a, b) { return a.n.localeCompare(b.n, S.lang); });
 
   var sc = {}; OF.forEach(function (o) { if (o.w === S.week) sc[o.s] = (sc[o.s] || 0) + 1; });
   $('#stores').innerHTML = '<button class="chip" data-store="" aria-pressed="' + anyStore + '">' + t('all') + '</button>' +
-    STORES.map(function (s) {
+    STORES.filter(function (s) { return myStore(s.nome); }).map(function (s) {
       return '<button class="chip" data-store="' + esc(s.nome) + '" aria-pressed="' + !!S.stores[s.nome] + '"><span class="dot" style="background:' + s.cor + '"></span>' + esc(s.nome) + ' <span class="n">' + (sc[s.nome] || 0) + '</span></button>';
     }).join('');
+  var cats = CATS.filter(function (c) { return counts[c] || S.cat === c; });
+  cats.sort(function (a, b) { return (P.fav.indexOf(a) < 0) - (P.fav.indexOf(b) < 0); });
   $('#cats').innerHTML = '<button class="chip" data-cat="" aria-pressed="' + !S.cat + '">' + t('all') + ' <span class="n">' + base.length + '</span></button>' +
-    CATS.filter(function (c) { return counts[c] || S.cat === c; }).map(function (c) {
-      return '<button class="chip" data-cat="' + c + '" aria-pressed="' + (S.cat === c) + '">' + EMO[c] + ' ' + t('c_' + c) + ' <span class="n">' + (counts[c] || 0) + '</span></button>';
-    }).join('');
+    cats.map(function (c) { return '<button class="chip" data-cat="' + c + '" aria-pressed="' + (S.cat === c) + '">' + EMO[c] + ' ' + t('c_' + c) + ' <span class="n">' + (counts[c] || 0) + '</span></button>'; }).join('');
 
   $('#resinfo').textContent = list.length === 1 ? t('results1') : t('results', { n: list.length });
-  if (!list.length) {
-    $('#grid').innerHTML = '<div class="empty" style="grid-column:1/-1"><span class="emo">🔎</span>' + t('nothing') + '</div>';
-  } else {
-    $('#grid').innerHTML = list.slice(0, S.limit).map(card).join('');
-  }
+  $('#grid').innerHTML = list.length ? list.slice(0, S.limit).map(function (o) { return card(o); }).join('')
+    : '<div class="empty" style="grid-column:1/-1"><span class="emo">🔎</span>' + t('nothing') + '</div>';
   var rest = list.length - S.limit, more = $('#more');
   more.hidden = rest <= 0;
   if (rest > 0) more.textContent = t('more', { n: rest });
   $('#qx').style.display = S.q ? 'block' : 'none';
 }
 
-/* ---------------- aba Où magasiner ---------------- */
-var BASKET_RX = D.cesta.map(function (it) {
-  return {
-    regs: it.termos.map(function (a) { return words(a).map(rxWord); }).filter(function (r) { return r.length; }),
-    ex: (it.excl || []).map(rxPre)
-  };
-});
-function basket(week) {
-  return D.cesta.map(function (it, idx) {
-    var R = BASKET_RX[idx], seen = {};
-    var m = OF.filter(function (o) {
-      if (o.w !== week || o.p == null) return false;
-      for (var i = 0; i < R.ex.length; i++) if (R.ex[i].test(o.k)) return false;
-      return R.regs.some(function (rs) { return rs.every(function (r) { return r.test(o.k); }); });
-    }).sort(cmpKey).filter(function (o) { var k = o.s + '|' + o.n + '|' + o.p; if (seen[k]) return false; seen[k] = 1; return true; });
-    var best = m[0], tie = {};
-    if (best) m.forEach(function (o) { if (o.key[0] === best.key[0] && o.key[1] <= best.key[1] * 1.005) tie[o.s] = o; });
-    return { it: it, offers: m, best: best, tie: tie };
-  });
-}
-function label(it) { return S.lang === 'pt' ? it.pt : it.fr; }
-
+/* ======================= aba Où magasiner ======================= */
 function renderWhere() {
-  var res = basket(S.week), total = res.length;
+  var res = basket(S.week), total = res.length, mine = P.basket.length > 0;
   var wins = {};
   res.forEach(function (r) { Object.keys(r.tie).forEach(function (s) { (wins[s] = wins[s] || []).push(r); }); });
   var order = Object.keys(wins).sort(function (a, b) { return wins[b].length - wins[a].length; });
-  var html = '<div class="panel"><h2>' + t(S.week === 'next' ? 'w_title_next' : 'w_title_cur') + '</h2><p class="sub">' + t('w_sub', { n: total }) + '</p>';
+  var html = '<div class="panel"><h2>' + t(S.week === 'next' ? 'w_title_next' : 'w_title_cur') + '</h2><p class="sub">' +
+    t(mine ? 'w_mine' : 'w_comm', { n: total }) + ' ' + t('w_kg') + (P.stores.length ? ' ' + t('w_stores', { s: esc(P.stores.join(', ')) }) : '') + '</p>';
   if (order.length) {
     html += '<div class="reco">' + t('w_one', { s: '<b>' + esc(order[0]) + '</b>', n: wins[order[0]].length, t: total });
     if (order.length > 1) {
-      var cov = {}; wins[order[0]].concat(wins[order[1]]).forEach(function (r) { cov[r.it.fr] = 1; });
+      var cov = {}; wins[order[0]].concat(wins[order[1]]).forEach(function (r) { cov[r.it.id] = 1; });
       html += '<br>' + t('w_two', { a: '<b>' + esc(order[0]) + '</b>', b: '<b>' + esc(order[1]) + '</b>', n: Object.keys(cov).length });
     }
     html += '</div><div class="rank">' + order.map(function (s, i) {
@@ -564,10 +903,11 @@ function renderWhere() {
       return '<div class="rk' + (i === 0 ? ' first' : '') + '"><div class="top">' + storeBadge(s) + (i === 0 ? '<span class="pill">#1</span>' : '') + '</div>' +
         '<div class="big">' + wins[s].length + ' <small>' + (wins[s].length === 1 ? t('product1') : t('products')) + ' · ' + t('w_best') + '</small></div>' +
         '<div class="addr">' + esc(st.endereco || '') + '</div><ul>' +
-        wins[s].map(function (r) { var o = r.tie[s]; return '<li>' + esc(label(r.it)) + ' — <b>' + esc(priceText(o)) + '</b></li>'; }).join('') + '</ul></div>';
+        wins[s].map(function (r) { return '<li>' + esc(label(r.it)) + ' — <b>' + esc(priceText(r.tie[s])) + '</b></li>'; }).join('') + '</ul></div>';
     }).join('') + '</div>';
+    html += '<div class="btns"><button class="btn pri" id="addbest">' + t('w_addbest') + '</button><button class="btn" data-go="prof" data-anchor="pbasket">' + t('w_edit') + '</button></div>';
   } else {
-    html += '<p class="none">' + t('w_none') + '</p>';
+    html += '<p class="none">' + t('w_none') + '</p><div class="btns"><button class="btn" data-go="prof" data-anchor="pbasket">' + t('w_edit') + '</button></div>';
   }
   html += '</div>';
 
@@ -582,15 +922,16 @@ function renderWhere() {
     if (tips.length) html += '<div class="panel"><h2>' + t('w_when') + '</h2><ul class="tips"><li>' + tips.join('</li><li>') + '</li></ul></div>';
   }
 
-  html += '<div class="panel"><h2>' + t('w_detail') + '</h2><p class="sub">' + t('w_edit') + '</p>';
+  html += '<div class="panel"><h2>' + t('w_detail') + '</h2>';
   var sec = null;
   res.forEach(function (r) {
-    var s = S.lang === 'pt' ? r.it.sec_pt : r.it.sec_fr;
+    var s = (S.lang === 'pt' ? r.it.sec_pt : r.it.sec_fr) || t('w_mysec');
     if (s !== sec) { sec = s; html += '<div class="sec">' + esc(s) + '</div>'; }
-    var b = r.best;
-    html += '<div class="bi"><div><h4>' + esc(label(r.it)) + ' ' + (b ? Object.keys(r.tie).map(storeBadge).join(' ') : '') + '</h4>' +
+    var b = r.best, lw = b ? lowWeeks(b) : 0;
+    html += '<div class="bi"><div><h4>' + esc(label(r.it)) + ' ' + (b ? Object.keys(r.tie).map(storeBadge).join(' ') : '') + (lw ? ' <span class="pill ok">' + t('low', { n: lw }) + '</span>' : '') + '</h4>' +
       (b ? '<div class="what">' + esc(b.n) + ' · ' + range(b.f, b.e) + '</div>' : '<div class="none">' + t('w_none') + '</div>') + '</div>' +
-      '<div class="pr">' + (b ? esc(priceText(b)) + (b.kg != null ? '<small>' + kgText(b) + '</small>' : '') : '') + '</div>';
+      '<div class="pr">' + (b ? esc(priceText(b)) + (b.kg != null ? '<small>' + kgText(b) + '</small>' : '') +
+        '<button class="mini" data-add="' + esc(b.i) + '" aria-pressed="' + !!saved[b.i] + '">' + addBtnText(!!saved[b.i]) + '</button>' : '') + '</div>';
     if (r.offers.length > 1) {
       html += '<details><summary>' + t('w_others', { n: r.offers.length - 1 }) + '</summary><ul class="ol">' +
         r.offers.slice(1, 12).map(function (o) { return '<li><span>' + storeBadge(o.s) + ' ' + esc(o.n) + '</span><span>' + esc(priceText(o)) + (o.kg != null ? ' · ' + kgText(o) : '') + '</span></li>'; }).join('') + '</ul></details>';
@@ -601,18 +942,20 @@ function renderWhere() {
   $('#p-where').innerHTML = html;
 }
 
-/* ---------------- aba Ma liste ---------------- */
+/* ======================= aba Ma liste ======================= */
 function snapshot(o) { return { s: o.s, n: o.n, pt: priceText(o), kg: kgText(o), f: o.f, e: o.e }; }
-function toggleSave(id) {
-  if (saved[id]) { delete saved[id]; delete checked[id]; }
+function toggleSave(id, force) {
+  var on = force === undefined ? !saved[id] : force;
+  if (!on) { delete saved[id]; delete checked[id]; }
   else if (BYID[id]) saved[id] = snapshot(BYID[id]);
-  LS.set('zc_saved', saved); LS.set('zc_checked', checked);
+  saveList();
 }
 function listGroups() {
   var g = {};
   Object.keys(saved).forEach(function (id) {
     var o = BYID[id], sn = saved[id];
-    var item = { id: id, s: sn.s, n: sn.n, pt: o ? priceText(o) : sn.pt, kg: o ? kgText(o) : sn.kg, f: sn.f, e: sn.e, exp: !o };
+    var exp = !o && (!sn.e || sn.e < TODAY);
+    var item = { id: id, s: sn.s, n: sn.n, pt: o ? priceText(o) : sn.pt, kg: o ? kgText(o) : sn.kg, f: sn.f, e: sn.e, exp: exp };
     (g[item.s] = g[item.s] || []).push(item);
   });
   return g;
@@ -628,20 +971,6 @@ function shareText() {
   lines.push(location.href.split('?')[0].split('#')[0]);
   return lines.join('\n');
 }
-function watchBest(term) {
-  var parts = norm(term).split(/\s+/), inc = [], ex = [];
-  parts.forEach(function (w) { if (w.charAt(0) === '-' && w.length > 1) ex.push(rxPre(w.slice(1))); else if (w && !STOP[w]) inc.push(rxWord(w)); });
-  var m = OF.filter(function (o) {
-    if (o.p == null || !inc.length) return false;
-    for (var i = 0; i < ex.length; i++) if (ex[i].test(o.k)) return false;
-    for (var j = 0; j < inc.length; j++) if (!inc[j].test(o.k)) return false;
-    return true;
-  });
-  var cur = m.filter(function (o) { return o.w === 'cur'; }).sort(cmpKey);
-  var nxt = m.filter(function (o) { return o.w === 'next'; }).sort(cmpKey);
-  return { cur: cur, next: nxt };
-}
-
 function renderList() {
   var g = listGroups(), n = Object.keys(saved).length;
   var html = '<div class="panel"><h2>' + t('l_title') + '</h2><p class="sub">' + t('l_local') + '</p>';
@@ -656,87 +985,260 @@ function renderList() {
           '<span class="p">' + esc(it.pt) + '</span><button class="rm" data-add="' + esc(it.id) + '" aria-label="×">×</button></label>';
       }).join('') + '</div>';
   });
-  if (n) html += '<div class="btns"><button class="btn pri" id="share">' + t('l_share') + '</button><button class="btn" id="copy">' + t('l_copy') + '</button><button class="btn danger" id="clear">' + (confirmClear ? t('l_confirm') : t('l_clear')) + '</button></div>';
-  html += '</div>';
-
-  html += '<div class="panel"><h2>' + t('wt_title') + '</h2><p class="sub">' + t('wt_sub') + '</p>' +
-    '<form class="addw" id="wform"><input id="wterm" placeholder="' + esc(t('wt_ph')) + '" autocomplete="off"><button class="btn pri" type="submit">' + t('wt_add') + '</button></form>';
-  watch.forEach(function (term, idx) {
-    var r = watchBest(term), top = r.cur.length ? r.cur : r.next, isNext = !r.cur.length && r.next.length;
-    html += '<div class="wt"><div class="h"><b>' + esc(term) + '</b><span>' + (top.length ? '<span class="pill">' + t('wt_best', { s: esc(top[0].s) }) + (isNext ? ' · ' + t('next_short') : '') + '</span>' : '') +
-      ' <button class="rm" data-unwatch="' + idx + '" aria-label="×">×</button></span></div>';
-    html += top.length ? '<ul class="ol">' + top.slice(0, 4).map(function (o) {
-      return '<li><span>' + storeBadge(o.s) + ' ' + esc(o.n) + '</span><span>' + esc(priceText(o)) + (o.kg != null ? ' · ' + kgText(o) : '') + '</span></li>';
-    }).join('') + '</ul>' : '<div class="none">' + t('wt_none') + '</div>';
-    html += '</div>';
-  });
+  if (n) html += '<div class="btns"><button class="btn pri" id="share">' + t('l_share') + '</button><button class="btn" id="copy">' + t('l_copy') + '</button><button class="btn danger" id="clear">' + (S.confirmClear ? t('l_confirm') : t('l_clear')) + '</button></div>';
   html += '</div>';
   $('#p-list').innerHTML = html;
 }
 
-/* ---------------- geral ---------------- */
-function toast(msg) { var el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove('on'); }, 1800); }
-function copy(text) {
-  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(function () { toast(t('l_copied')); }, function () { fallbackCopy(text); });
-  fallbackCopy(text);
-}
-function fallbackCopy(text) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast(t('l_copied')); } catch (e) {} ta.remove(); }
+/* ======================= aba Mon profil ======================= */
+var deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); deferredPrompt = e; if (S.tab === 'prof') renderProfile(); });
+function isStandalone() { return (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true; }
+function isIOS() { return /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
 
-function renderAll() {
-  renderStatic(); renderHero(); renderTabs();
-  if (S.tab === 'deals') renderDeals();
-  if (S.tab === 'where') renderWhere();
-  if (S.tab === 'list') renderList();
+function chipsHTML(list, attr, selected, cls) {
+  return list.map(function (x) {
+    return '<button class="chip' + (cls ? ' ' + cls : '') + '" ' + attr + '="' + esc(x.v) + '" aria-pressed="' + (selected.indexOf(x.v) >= 0) + '">' + x.h + '</button>';
+  }).join('');
 }
-function renderPanel() { renderHero(); renderTabs(); if (S.tab === 'deals') renderDeals(); else if (S.tab === 'where') renderWhere(); else renderList(); }
+function renderProfile() {
+  var stores = STORES.map(function (s) { return { v: s.nome, h: '<span class="dot" style="background:' + s.cor + '"></span>' + esc(s.nome) }; });
+  var cats = CATS.map(function (c) { return { v: c, h: EMO[c] + ' ' + t('c_' + c) }; });
+  var inB = {}; P.basket.forEach(function (it) { inB[it.termos.join('|')] = 1; });
+  var sugg = COMMUNITY.filter(function (it) { return !inB[it.termos.join('|')]; });
+  var html = '<div class="panel"><h2>' + t('p_title') + '</h2><p class="sub">' + t('p_sub') + '</p>' +
+    '<div class="pgrid"><label class="small" for="pname">' + t('p_name') + '</label><input class="inp" id="pname" maxlength="30" autocomplete="given-name" placeholder="' + esc(t('p_name_ph')) + '" value="' + esc(P.name) + '"></div>' +
+    '<h3>' + t('p_stores') + '</h3><p class="sub">' + t('p_stores_sub') + '</p><div class="chips wrapc">' + chipsHTML(stores, 'data-pstore', P.stores) + '</div>' +
+    '<h3 id="pbasket">' + t('p_basket') + '</h3><p class="sub">' + t('p_basket_sub') + '</p>';
+  if (!P.basket.length) html += '<p class="none">' + t('p_basket_empty') + '</p><div class="btns" style="margin:0 0 8px"><button class="btn" id="fromcomm">' + t('p_from_comm') + '</button></div>';
+  else html += '<div class="bl">' + P.basket.map(function (it) {
+    return '<span class="chip">' + esc(label(it)) + (it.excl && it.excl.length ? ' <span class="n">−' + esc(it.excl.slice(0, 2).join(', −')) + (it.excl.length > 2 ? '…' : '') + '</span>' : '') +
+      '<button data-brm="' + esc(it.id) + '" aria-label="×">×</button></span>';
+  }).join('') + '</div>';
+  html += '<form class="addw" id="bform"><input class="inp" id="binp" autocomplete="off" placeholder="' + esc(t('p_add_ph')) + '"><button class="btn pri" type="submit">' + t('p_add') + '</button></form>' +
+    '<p class="small">' + t('p_tip') + '</p>';
+  if (sugg.length) html += '<p class="small" style="margin-bottom:4px">' + t('p_suggest') + '</p><div class="chips wrapc">' +
+    sugg.map(function (it) { return '<button class="chip" data-badd="' + esc(it.id) + '">+ ' + esc(label(it)) + '</button>'; }).join('') + '</div>';
+  html += '<h3>' + t('p_fav') + '</h3><p class="sub">' + t('p_fav_sub') + '</p><div class="chips wrapc">' + chipsHTML(cats, 'data-pfav', P.fav) + '</div>' +
+    '<h3>' + t('p_hide') + '</h3><p class="sub">' + t('p_hide_sub') + '</p><div class="chips wrapc">' + chipsHTML(cats, 'data-phide', P.hide, 'neg') + '</div>' +
+    '<h3>' + t('p_theme') + '</h3><div class="seg" style="display:inline-flex">' +
+      ['auto', 'light', 'dark'].map(function (k) { return '<button data-ptheme="' + k + '" aria-pressed="' + (P.theme === k) + '">' + t('th_' + k) + '</button>'; }).join('') + '</div>' +
+    '<h3>' + t('p_sort') + '</h3><select class="sel" id="psort">' +
+      ['auto', 'disc', 'kg', 'price', 'az'].map(function (k) { return '<option value="' + k + '"' + (P.sort === k ? ' selected' : '') + '>' + t('s_' + k) + '</option>'; }).join('') + '</select>' +
+    '</div>';
+
+  var inst;
+  if (isStandalone()) inst = '<p><span class="pill ok">' + t('inst_done') + '</span></p>';
+  else if (deferredPrompt) inst = '<div class="btns"><button class="btn pri" id="inst">' + t('inst_btn') + '</button></div>';
+  else inst = '<p>' + (isIOS() ? t('inst_ios') : t('inst_other')) + '</p>';
+  html += '<div class="panel"><h2>' + t('p_install') + '</h2>' + inst + '<p class="small">' + t('inst_why') + '</p></div>';
+
+  var hw = histWeeks();
+  html += '<div class="panel"><h2>' + t('p_backup') + '</h2><p class="sub">' + t('p_backup_sub') + '</p>' +
+    '<div class="btns"><button class="btn pri" id="xlink">🔗 ' + t('x_link') + '</button><button class="btn" id="xexport">⬇ ' + t('x_export') + '</button><button class="btn" id="ximport">⬆ ' + t('x_import') + '</button></div>' +
+    '<h3>' + t('p_data') + '</h3><p class="small">' + (S.persisted ? t('st_p') : t('st_np')) + '<br>' + (hw > 1 ? t('hist_n', { n: hw }) : t('hist_0')) + '</p>' +
+    '<div class="btns"><button class="btn danger" id="xreset">' + (S.confirmReset ? t('l_confirm') : t('x_reset')) + '</button></div></div>';
+  $('#p-prof').innerHTML = html;
+}
+
+/* ======================= exportar / importar ======================= */
+function payload() {
+  var s = {};
+  Object.keys(saved).forEach(function (id) { s[id] = saved[id]; });
+  var p = clone(P); delete p.onboarded; delete p.dismissed;
+  return { app: 'aubaines-valbelair', v: 1, p: p, s: s, c: checked };
+}
+function doImport(obj) {
+  if (!obj || obj.app !== 'aubaines-valbelair' || !obj.p) { toast(t('bad_file')); return false; }
+  P = fixProfile(Object.assign(clone(P), obj.p));
+  P.onboarded = true;
+  S.lang = P.lang; S.sort = P.sort;
+  Object.keys(obj.s || {}).forEach(function (id) { saved[id] = obj.s[id]; });
+  Object.keys(obj.c || {}).forEach(function (id) { if (saved[id]) checked[id] = 1; });
+  DB.set('profile', P); saveList(); applyTheme();
+  toast(t('imported'));
+  return true;
+}
+function readImportHash() {
+  var h = location.hash || '';
+  if (h.indexOf('#importer=') !== 0) return;
+  try { S.pendingImport = JSON.parse(b64d(h.slice(10))); } catch (e) { S.pendingImport = null; }
+}
+function clearHash() { try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { location.hash = ''; } }
+function download(name, text) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  a.download = name; document.body.appendChild(a); a.click();
+  setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function mailto(subject, body) { return 'mailto:' + CONTATO.join('@') + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body); }
+function reportOffer(o) {
+  location.href = mailto('[Aubaines] ' + t('rep_subj') + ' — ' + o.s + ' — ' + o.n, [
+    t('rep_intro'), '',
+    'Magasin / Loja : ' + o.s,
+    'Produit / Produto : ' + o.n + (o.b ? ' (' + o.b + ')' : ''),
+    'Prix affiché / Preço : ' + priceText(o) + (o.kg != null ? ' (' + kgText(o) + ')' : ''),
+    'Validité / Validade : ' + o.f + ' → ' + o.e,
+    'Réf. : ' + o.i, 'Page : ' + location.href.split('#')[0], '',
+    t('rep_what'), ''
+  ].join('\n'));
+}
+
+/* ======================= compartilhar ======================= */
+function siteUrl() { return (D.url && /^https?:/.test(D.url) && location.protocol !== 'file:') ? location.href.split('#')[0].split('?')[0] : (D.url || location.href.split('#')[0].split('?')[0]); }
+function openShare(title, text, url) {
+  var full = text + '\n' + url;
+  if (navigator.share && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)) {
+    navigator.share({ title: title, text: text, url: url }).catch(function () {});
+    return;
+  }
+  $('#shtitle').textContent = title;
+  $('#shtext').textContent = full;
+  $('#shwa').href = 'https://wa.me/?text=' + encodeURIComponent(full);
+  $('#shfb').href = 'https://www.facebook.com/sharer/sharer.php?u=' + encodeURIComponent(url);
+  $('#shmail').href = 'mailto:?subject=' + encodeURIComponent(title) + '&body=' + encodeURIComponent(full);
+  $('#shcopy').setAttribute('data-url', full);
+  $('#shbox').hidden = false;
+}
+function shareApp() { openShare('Aubaines Val-Bélair', t('sh_app'), siteUrl()); }
+function shareDeal(o) {
+  var q = o.n.split(/[,(]/)[0].trim();
+  var url = siteUrl() + '?q=' + encodeURIComponent(q) + (o.w === 'next' ? '&semaine=next' : '');
+  openShare(t('sh_deal_t'), t('sh_deal', { n: o.n, p: priceText(o), s: o.s, d: range(o.f, o.e) }), url);
+}
+
+/* ======================= geral ======================= */
+function toast(msg) { var el = $('#toast'); el.textContent = msg; el.classList.add('on'); clearTimeout(toast._t); toast._t = setTimeout(function () { el.classList.remove('on'); }, 1800); }
+function copy(text, msg) {
+  var ok = function () { toast(msg || t('l_copied')); };
+  if (navigator.clipboard && navigator.clipboard.writeText) return navigator.clipboard.writeText(text).then(ok, function () { fallbackCopy(text, ok); });
+  fallbackCopy(text, ok);
+}
+function fallbackCopy(text, ok) { var ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); ok(); } catch (e) {} ta.remove(); }
+function renderCurrent() {
+  if (S.tab === 'deals') renderDeals(); else if (S.tab === 'where') renderWhere(); else if (S.tab === 'list') renderList(); else renderProfile();
+}
+function renderPanel() { renderHero(); renderTabs(); renderCurrent(); }
+function renderAll() { applyTheme(); renderStatic(); renderPanel(); }
+function goTab(tab, anchor) {
+  S.tab = tab; S.confirmClear = false; S.confirmReset = false;
+  renderPanel();
+  var el = anchor && document.getElementById(anchor);
+  if (el) el.scrollIntoView({ block: 'start' });
+  else window.scrollTo({ top: Math.min(window.scrollY, $('.tabs').offsetTop - 60) });
+}
+function toggleIn(arr, v) { var i = arr.indexOf(v); if (i >= 0) arr.splice(i, 1); else arr.push(v); }
 
 document.addEventListener('click', function (ev) {
-  var el = ev.target.closest('button, [data-check]');
+  if (ev.target.id === 'shbox') { ev.target.hidden = true; return; }
+  var el = ev.target.closest('button');
   if (!el) return;
   var v;
-  if ((v = el.getAttribute('data-lang'))) { S.lang = v; LS.set('zc_lang', v); renderAll(); return; }
+  if ((v = el.getAttribute('data-lang'))) { S.lang = v; LS.set('zc_lang', v); saveProfile(true); renderAll(); return; }
   if ((v = el.getAttribute('data-week')) && !el.disabled) { S.week = v; S.limit = 48; renderPanel(); return; }
-  if ((v = el.getAttribute('data-tab'))) { S.tab = v; confirmClear = false; renderPanel(); window.scrollTo({ top: Math.min(window.scrollY, $('.tabs').offsetTop - 60) }); return; }
+  if ((v = el.getAttribute('data-tab'))) { goTab(v); return; }
+  if ((v = el.getAttribute('data-go'))) { goTab(v, el.getAttribute('data-anchor')); return; }
   if (el.hasAttribute('data-store')) { v = el.getAttribute('data-store'); if (!v) S.stores = {}; else if (S.stores[v]) delete S.stores[v]; else S.stores[v] = 1; S.limit = 48; renderDeals(); return; }
   if (el.hasAttribute('data-cat')) { S.cat = el.getAttribute('data-cat'); S.limit = 48; renderDeals(); return; }
   if ((v = el.getAttribute('data-add'))) {
     ev.preventDefault(); toggleSave(v); renderTabs();
     if (S.tab === 'list') renderList();
-    else { var on = !!saved[v]; el.setAttribute('aria-pressed', on); el.textContent = on ? '✓ ' + t('added') : '+ ' + t('add'); }
+    else $$('[data-add="' + (window.CSS && CSS.escape ? CSS.escape(v) : v) + '"]').forEach(function (b) { var on = !!saved[v]; b.setAttribute('aria-pressed', on); b.textContent = addBtnText(on); });
     return;
   }
-  if (el.hasAttribute('data-unwatch')) { watch.splice(+el.getAttribute('data-unwatch'), 1); LS.set('zc_watch', watch); renderList(); return; }
-  if (el.id === 'more') { S.limit += 48; renderDeals(); return; }
-  if (el.id === 'qx') { S.q = ''; $('#q').value = ''; S.limit = 48; renderDeals(); $('#q').focus(); return; }
-  if (el.id === 'copy') { copy(shareText()); return; }
-  if (el.id === 'share') {
-    var txt = shareText();
-    if (navigator.share) navigator.share({ title: t('share_title'), text: txt }).catch(function () {}); else copy(txt);
+  if ((v = el.getAttribute('data-report'))) { if (BYID[v]) reportOffer(BYID[v]); return; }
+  if ((v = el.getAttribute('data-sharedeal'))) { if (BYID[v]) shareDeal(BYID[v]); return; }
+  if (el.hasAttribute('data-go-region')) { $('#regiao').scrollIntoView({ behavior: 'smooth' }); return; }
+  if ((v = el.getAttribute('data-pstore'))) { toggleIn(P.stores, v); S.stores = {}; saveProfile(); renderPanel(); return; }
+  if ((v = el.getAttribute('data-pfav'))) { toggleIn(P.fav, v); var hi = P.hide.indexOf(v); if (hi >= 0) P.hide.splice(hi, 1); saveProfile(); renderProfile(); return; }
+  if ((v = el.getAttribute('data-phide'))) { toggleIn(P.hide, v); var fi = P.fav.indexOf(v); if (fi >= 0) P.fav.splice(fi, 1); saveProfile(); renderProfile(); return; }
+  if ((v = el.getAttribute('data-ptheme'))) { P.theme = v; applyTheme(); saveProfile(); renderProfile(); return; }
+  if ((v = el.getAttribute('data-badd'))) {
+    var src = COMMUNITY.filter(function (x) { return x.id === v; })[0];
+    if (src) { P.basket.push(clone(src)); P.onboarded = true; saveProfile(); renderPanel(); }
     return;
   }
-  if (el.id === 'clear') {
-    if (!confirmClear) { confirmClear = true; renderList(); return; }
-    saved = {}; checked = {}; confirmClear = false; LS.set('zc_saved', saved); LS.set('zc_checked', checked); renderTabs(); renderList(); return;
+  if ((v = el.getAttribute('data-brm'))) { P.basket = P.basket.filter(function (x) { return x.id !== v; }); saveProfile(); renderPanel(); return; }
+  switch (el.id) {
+    case 'shareapp': shareApp(); return;
+    case 'shclose': $('#shbox').hidden = true; return;
+    case 'shcopy': copy(el.getAttribute('data-url'), t('link_copied')); $('#shbox').hidden = true; return;
+    case 'more': S.limit += 48; renderDeals(); return;
+    case 'qx': S.q = ''; $('#q').value = ''; S.limit = 48; renderDeals(); $('#q').focus(); return;
+    case 'copy': copy(shareText()); return;
+    case 'share':
+      var txt = shareText();
+      if (navigator.share) navigator.share({ title: t('share_title'), text: txt }).catch(function () {}); else copy(txt);
+      return;
+    case 'clear':
+      if (!S.confirmClear) { S.confirmClear = true; renderList(); return; }
+      saved = {}; checked = {}; S.confirmClear = false; saveList(); renderTabs(); renderList(); return;
+    case 'addbest':
+      var n = 0;
+      basket(S.week).forEach(function (r) { if (r.best && !saved[r.best.i]) { toggleSave(r.best.i, true); n++; } });
+      toast(t('w_added', { n: n })); renderTabs(); renderWhere(); return;
+    case 'ob-later': P.dismissed = true; saveProfile(true); renderHero(); return;
+    case 'imp-yes': doImport(S.pendingImport); S.pendingImport = null; clearHash(); renderAll(); return;
+    case 'imp-no': S.pendingImport = null; clearHash(); renderHero(); return;
+    case 'fromcomm': P.basket = clone(COMMUNITY); P.onboarded = true; saveProfile(); renderPanel(); return;
+    case 'inst':
+      if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt.userChoice.then(function () { deferredPrompt = null; renderProfile(); }); }
+      return;
+    case 'xlink':
+      var url = location.href.split('#')[0].split('?')[0] + '#importer=' + b64e(JSON.stringify(payload()));
+      if (navigator.share) navigator.share({ title: 'Aubaines Val-Bélair', url: url }).catch(function () { copy(url, t('x_linkcopied')); });
+      else copy(url, t('x_linkcopied'));
+      return;
+    case 'xexport': download('aubaines-profil-' + TODAY + '.json', JSON.stringify(payload(), null, 1)); return;
+    case 'ximport': $('#impfile').click(); return;
+    case 'xreset':
+      if (!S.confirmReset) { S.confirmReset = true; renderProfile(); return; }
+      DB.wipe().then(function () { P = fixProfile(null); saved = {}; checked = {}; HIST = {}; S.confirmReset = false; S.sort = 'auto'; renderAll(); });
+      return;
   }
 });
 document.addEventListener('change', function (ev) {
   var el = ev.target, id = el.getAttribute && el.getAttribute('data-check');
-  if (id) { if (el.checked) checked[id] = 1; else delete checked[id]; LS.set('zc_checked', checked); el.closest('.li').classList.toggle('done', el.checked); return; }
+  if (id) { if (el.checked) checked[id] = 1; else delete checked[id]; saveList(); el.closest('.li').classList.toggle('done', el.checked); return; }
   if (el.id === 'sort') { S.sort = el.value; renderDeals(); return; }
   if (el.id === 'onlydisc') { S.disc = el.checked; S.limit = 48; renderDeals(); return; }
+  if (el.id === 'psort') { P.sort = el.value; S.sort = el.value; saveProfile(); return; }
+  if (el.id === 'impfile' && el.files && el.files[0]) {
+    var fr = new FileReader();
+    fr.onload = function () { try { if (doImport(JSON.parse(fr.result))) renderAll(); } catch (e) { toast(t('bad_file')); } el.value = ''; };
+    fr.readAsText(el.files[0]);
+  }
+});
+document.addEventListener('input', function (ev) {
+  if (ev.target.id === 'pname') { P.name = ev.target.value.trim().slice(0, 30); P.onboarded = true; saveProfile(); renderHero(); }
 });
 document.addEventListener('submit', function (ev) {
-  if (ev.target.id !== 'wform') return;
+  if (ev.target.id !== 'bform') return;
   ev.preventDefault();
-  var v = $('#wterm').value.trim();
-  if (v && watch.indexOf(v) < 0) { watch.unshift(v); LS.set('zc_watch', watch); }
-  renderList();
+  var it = customItem($('#binp').value);
+  if (it) { P.basket.push(it); P.onboarded = true; saveProfile(); renderPanel(); var b = $('#binp'); if (b) b.focus(); }
 });
 var deb;
 $('#q').addEventListener('input', function (ev) { clearTimeout(deb); deb = setTimeout(function () { S.q = ev.target.value; S.limit = 48; renderDeals(); }, 120); });
 
+/* ======================= início ======================= */
+readImportHash();
+migrateOld();
 $('#q').value = S.q;
 renderAll();
+// carrega do IndexedDB (fonte principal) e redesenha se for diferente do espelho
+Promise.all([DB.get('profile'), DB.get('saved'), DB.get('checked')]).then(function (r) {
+  var changed = false;
+  if (r[0] && JSON.stringify(r[0]) !== JSON.stringify(P)) { P = fixProfile(r[0]); S.lang = params.get('lang') || P.lang; S.sort = P.sort; changed = true; }
+  if (r[1] && JSON.stringify(r[1]) !== JSON.stringify(saved)) { saved = r[1]; changed = true; }
+  if (r[2] && JSON.stringify(r[2]) !== JSON.stringify(checked)) { checked = r[2]; changed = true; }
+  if (changed) renderAll();
+  if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then(function (x) { S.persisted = !!x; }).catch(function () {});
+  recordHistory();
+});
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  window.addEventListener('load', function () { navigator.serviceWorker.register('sw.js').catch(function () {}); });
+}
 })();
 </script>
 </body>
