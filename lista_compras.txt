@@ -1,0 +1,44 @@
+# ============================================================
+#  LISTA DE COMPRAS — edite à vontade
+# ============================================================
+#  Formato de cada linha:
+#     Nome em português = termo em francês
+#
+#  - Use os termos em FRANCÊS (é a língua dos folhetos no Québec).
+#  - Vários termos alternativos: separe com  |
+#       Ovos = oeufs | douzaine d'oeufs
+#  - Para EXCLUIR produtos que não interessam, use -palavra
+#       Morango = fraises -yogourt -confiture
+#    (assim "yogourt aux fraises" não entra na comparação)
+#  - Linhas entre colchetes viram seções no relatório: [Frutas]
+#  - Linhas começando com # são ignoradas.
+# ============================================================
+
+[Frutas]
+Banana = bananes | banane -chips -pain -muffin -yogourt -barre -saveur
+Maçã = pommes | pomme -terre -jus -compote -croustilles -chips -saveur -tarte
+Morango = fraises | fraise -yogourt -confiture -saveur -jus -gelee -tarte -barre
+Uva = raisins -secs -sec -jus -pain
+Laranja / Clementina = oranges | clementines | mandarines -jus -saveur
+Abacate = avocats | avocat -huile -guacamole
+Manga = mangues | mangue -jus -sechee -saveur -sorbet
+Abacaxi = ananas -jus -conserve -saveur
+Mirtilo (blueberry) = bleuets -muffin -yogourt -confiture -saveur -barre -jus
+
+[Carnes]
+Peito de frango = poitrines de poulet | poitrine de poulet -bouillon -soupe -panees -nuggets
+Coxa / sobrecoxa de frango = cuisses de poulet | hauts de cuisses -bouillon -soupe
+Frango inteiro = poulet entier
+Carne moída = boeuf hache -lasagne -sauce -burger -galettes
+Bife / steak = bifteck | steak -sauce -epices -assaisonnement -hache
+Picanha / rosbife (surlonge) = surlonge | roti de boeuf -sauce
+Porco (lombo / costeleta) = longe de porc | cotelettes de porc | filet de porc -sauce
+Costelinha de porco = cotes levees -sauce
+
+[Peixes]
+Salmão = saumon -fume -sushi -nourriture
+Camarão = crevettes -sushi -chips
+
+[Outros]
+Ovos = oeufs -chocolat -paques
+Leite = lait -chocolat -amande -avoine -soya -coco -chevre -savon -corps -bain
